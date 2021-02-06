@@ -1,14 +1,19 @@
 import argparse
 import json
 import os
-import utils
 from collections import OrderedDict
 import torch
+import csv
+import util
 from transformers import DistilBertTokenizerFast
 from transformers import DistilBertForQuestionAnswering
 from transformers import AdamW
+from tensorboardX import SummaryWriter
+
+
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import RandomSampler, SequentialSampler
+from args import get_train_test_args
 
 from tqdm import tqdm
 
@@ -128,13 +133,13 @@ def read_and_process(args, tokenizer, dataset_dict, dir_name, dataset_name, spli
     #TODO: cache this if possible
     cache_path = f'{dir_name}/{dataset_name}_encodings.pt'
     if os.path.exists(cache_path) and not args.recompute_features:
-        tokenized_examples = utils.load_pickle(cache_path)
+        tokenized_examples = util.load_pickle(cache_path)
     else:
         if split=='train':
             tokenized_examples = prepare_train_data(dataset_dict, tokenizer)
         else:
             tokenized_examples = prepare_eval_data(dataset_dict, tokenizer)
-        utils.save_pickle(tokenized_examples, cache_path)
+        util.save_pickle(tokenized_examples, cache_path)
     return tokenized_examples
 
 
@@ -154,8 +159,7 @@ class Trainer():
     def save(self, model):
         model.save_pretrained(self.path)
 
-    def evaluate(self, model, data_loader, data_dict):
-        nll_meter = utils.AverageMeter()
+    def evaluate(self, model, data_loader, data_dict, return_preds=False, split='validation'):
         device = self.device
 
         model.eval()
@@ -177,19 +181,23 @@ class Trainer():
                 all_start_logits.append(start_logits)
                 all_end_logits.append(end_logits)
                 progress_bar.update(batch_size)
-                progress_bar.set_postfix(NLL=nll_meter.avg)
 
         # Get F1 and EM scores
         start_logits = torch.cat(all_start_logits).cpu().numpy()
         end_logits = torch.cat(all_end_logits).cpu().numpy()
-        preds = utils.postprocess_qa_predictions(data_dict,
+        preds = util.postprocess_qa_predictions(data_dict,
                                                  data_loader.dataset.encodings,
                                                  (start_logits, end_logits))
-        results = utils.eval_dicts(data_dict, preds)
-        results_list = [('NLL', nll_meter.avg),
-                        ('F1', results['F1']),
-                        ('EM', results['EM'])]
+        if split == 'validation':
+            results = util.eval_dicts(data_dict, preds)
+            results_list = [('F1', results['F1']),
+                            ('EM', results['EM'])]
+        else:
+            results_list = [('F1', -1.0),
+                            ('EM', -1.0)]
         results = OrderedDict(results_list)
+        if return_preds:
+            return preds, results
         return results
 
     def train(self, model, train_dataloader, eval_dataloader, val_dict):
@@ -198,6 +206,7 @@ class Trainer():
         optim = AdamW(model.parameters(), lr=self.lr)
         global_idx = 0
         best_scores = {'F1': -1.0, 'EM': -1.0}
+        tbx = SummaryWriter(self.args.save_dir)
 
         for epoch_num in range(self.num_epochs):
             self.log.info(f'Epoch: {epoch_num}')
@@ -217,10 +226,15 @@ class Trainer():
                     self.log.info(f'{global_idx}: {loss.item()}')
                     optim.step()
                     progress_bar.update(len(input_ids))
+                    progress_bar.set_postfix(epoch=epoch_num, NLL=loss.item())
+                    tbx.add_scalar('train/NLL', loss.item(), global_idx)
                     if (global_idx % self.eval_every) == 0:
                         self.log.info(f'Evaluating at step {global_idx}...')
                         curr_score = self.evaluate(model, eval_dataloader, val_dict)
                         results_str = ', '.join(f'{k}: {v:05.2f}' for k, v in curr_score.items())
+                        self.log.info('Visualizing in TensorBoard...')
+                        for k, v in curr_score.items():
+                            tbx.add_scalar(f'dev/{k}', v, global_idx)
                         self.log.info(f'Eval {results_str}')
                         if curr_score['F1'] >= best_scores['F1']:
                             best_scores = curr_score
@@ -228,66 +242,55 @@ class Trainer():
                     global_idx += 1
         return best_scores
 
-
-
-def main():
-    # define parser and arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--batch-size', type=int, default=16)
-    parser.add_argument('--num-epochs', type=int, default=3)
-    parser.add_argument('--lr', type=float, default=1e-5)
-    parser.add_argument('--seed', type=int, default=42)
-    parser.add_argument('--save-dir', type=str, default='save/')
-    parser.add_argument('--train', action='store_true')
-    parser.add_argument('--eval', action='store_true')
-    parser.add_argument('--datasets', type=str, default='squad,nat_questions,newsqa')
-    parser.add_argument('--run-name', type=str, default='multitask_distilbert')
-    parser.add_argument('--recompute-features', action='store_true')
-    parser.add_argument('--toy', action='store_true')
-    parser.add_argument('--eval-every', type=int, default=5000)
-    args = parser.parse_args()
-    log = utils.get_logger(args.save_dir, args.run_name)
-    log.info(f'Args: {json.dumps(vars(args), indent=4, sort_keys=True)}')
-    args.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+def get_dataset(args, data_dir, tokenizer, split_name):
     datasets = args.datasets.split(',')
-
-    utils.set_seed(args.seed)
-
-    train_dict, val_dict = None, None
-    tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased-distilled-squad')
-    train_dir = 'datasets/train_toy' if args.toy else 'datasets/train'
-    dev_dir = 'datasets/dev_toy' if args.toy else 'datasets/iid_dev'
+    dataset_dict = None
     dataset_name=''
     for dataset in datasets:
         dataset_name += f'_{dataset}'
-        if args.toy:
-            train_dict_curr = utils.read_squad(f'{train_dir}/{dataset}')
-            val_dict_curr = utils.read_squad(f'{dev_dir}/{dataset}')
-        else:
-            train_dict_curr = utils.read_squad(f'{train_dir}/{dataset}')
-            val_dict_curr = utils.read_squad(f'{dev_dir}/{dataset}')
-        train_dict = utils.merge(train_dict, train_dict_curr)
-        val_dict = utils.merge(val_dict, val_dict_curr)
-    train_encodings = read_and_process(args, tokenizer, train_dict, train_dir, dataset_name, 'train')
-    val_encodings = read_and_process(args, tokenizer, val_dict, dev_dir, dataset_name, 'eval')
+        dataset_dict_curr = util.read_squad(f'{dataset_dict}/{dataset}')
+        dataset_dict = util.merge(dataset_dict, dataset_dict_curr)
+    data_encodings = read_and_process(args, tokenizer, dataset_dict, data_dir, dataset_name, split_name)
+    return util.QADataset(data_encodings), dataset_dict
 
-    train_dataset = utils.QADataset(train_encodings)
-    val_dataset = utils.QADataset(val_encodings, train=False)
-    train_sampler = RandomSampler(train_dataset)
-    val_sampler = SequentialSampler(val_dataset)
-    train_loader = DataLoader(train_dataset,
-                              batch_size=args.batch_size,
-                              sampler=train_sampler)
-    val_loader = DataLoader(val_dataset,
-                            batch_size=args.batch_size,
-                            sampler=val_sampler)
+def main():
+    # define parser and arguments
+    args = get_train_test_args()
+    log = util.get_logger(args.save_dir, args.run_name)
+    log.info(f'Args: {json.dumps(vars(args), indent=4, sort_keys=True)}')
+    args.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-    # define a model and begin training
-    #model = DistilBertForQuestionAnswering.from_pretrained("distilbert-base-uncased")
-    model = DistilBertForQuestionAnswering.from_pretrained("distilbert-base-uncased-distilled-squad")
+    util.set_seed(args.seed)
+    model = DistilBertForQuestionAnswering.from_pretrained("distilbert-base-uncased")
+    tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
     trainer = Trainer(args, log)
-    best_scores = trainer.train(model, train_loader, val_loader, val_dict)
-    print(best_scores)
+
+    if args.do_train:
+        train_dataset, _ = get_dataset(args, args.train_dir, tokenizer, 'train')
+        val_dataset, val_dict = get_dataset(args, args.val_dir, tokenizer, 'val')
+        train_loader = DataLoader(train_dataset,
+                                batch_size=args.batch_size,
+                                sampler=RandomSampler(train_dataset))
+        val_loader = DataLoader(val_dataset,
+                                batch_size=args.batch_size,
+                                sampler=SequentialSampler(val_dataset))
+        best_scores = trainer.train(model, train_loader, val_loader, val_dict)
+    if args.do_test:
+        test_dataset, test_dict = get_dataset(args, args.test_dir, tokenizer, 'test')
+        test_loader = DataLoader(test_dataset,
+                                 batch_size=args.batch_size,
+                                 sampler=SequentialSampler(test_dataset))
+        test_scores, test_preds = trainer.evaluate(model, test_loader,
+                                                   test_dict, return_preds=True,
+                                                   split='test')
+        # Write submission file
+        sub_path = os.path.join(args.save_dir, 'test' + '_' + args.sub_file)
+        log.info(f'Writing submission file to {sub_path}...')
+        with open(sub_path, 'w', newline='', encoding='utf-8') as csv_fh:
+            csv_writer = csv.writer(csv_fh, delimiter=',')
+            csv_writer.writerow(['Id', 'Predicted'])
+            for uuid in sorted(test_preds):
+                csv_writer.writerow([uuid, test_preds[uuid]])
 
 
 if __name__ == '__main__':
