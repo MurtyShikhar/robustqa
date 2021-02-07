@@ -28,6 +28,62 @@ def save_pickle(obj, path):
         pickle.dump(obj, f)
     return
 
+def visualize(tbx, pred_dict, gold_dict, step, split, num_visuals):
+    """Visualize text examples to TensorBoard.
+
+    Args:
+        tbx (tensorboardX.SummaryWriter): Summary writer.
+        pred_dict (dict): dict of predictions of the form id -> pred.
+        step (int): Number of examples seen so far during training.
+        split (str): Name of data split being visualized.
+        num_visuals (int): Number of visuals to select at random from preds.
+    """
+    if num_visuals <= 0:
+        return
+    if num_visuals > len(pred_dict):
+        num_visuals = len(pred_dict)
+    id2index = {curr_id : idx for idx, curr_id in enumerate(gold_dict['id'])}
+    visual_ids = np.random.choice(list(pred_dict), size=num_visuals, replace=False)
+    for i, id_ in enumerate(visual_ids):
+        pred = pred_dict[id_] or 'N/A'
+        idx_gold_dict = id2index[id_]
+        question = gold_dict['question'][idx_gold_dict]
+        context = gold_dict['context'][idx_gold_dict]
+        answers = gold_dict['answer'][idx_gold_dict]
+        gold = answers['text'][0] if answers else 'N/A'
+        tbl_fmt = (f'- **Question:** {question}\n'
+                   + f'- **Context:** {context}\n'
+                   + f'- **Answer:** {gold}\n'
+                   + f'- **Prediction:** {pred}')
+        tbx.add_text(tag=f'{split}/{i+1}_of_{num_visuals}',
+                     text_string=tbl_fmt,
+                     global_step=step)
+
+
+def get_save_dir(base_dir, name, training, id_max=100):
+    """Get a unique save directory by appending the smallest positive integer
+    `id < id_max` that is not already taken (i.e., no dir exists with that id).
+
+    Args:
+        base_dir (str): Base directory in which to make save directories.
+        name (str): Name to identify this training run. Need not be unique.
+        training (bool): Save dir. is for training (determines subdirectory).
+        id_max (int): Maximum ID number before raising an exception.
+
+    Returns:
+        save_dir (str): Path to a new directory with a unique name.
+    """
+    for uid in range(1, id_max):
+        subdir = 'train' if training else 'test'
+        save_dir = os.path.join(base_dir, subdir, f'{name}-{uid:02d}')
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+            return save_dir
+
+    raise RuntimeError('Too many save directories created with the same name. \
+                       Delete old save directories or use another name.')
+
+
 def filter_encodings(encodings):
     filter_idx = [idx for idx, val in enumerate(encodings['end_positions'])
                  if not val]
@@ -158,7 +214,20 @@ def read_squad(path):
                     data_dict['context'].append(context)
                     data_dict['id'].append(qa['id'])
                     data_dict['answer'].append(answer)
-    return data_dict
+    id_map = ddict(list)
+    for idx, qid in enumerate(data_dict['id']):
+        id_map[qid].append(idx)
+
+    data_dict_collapsed = {'question': [], 'context': [], 'id': [], 'answer': []}
+    for qid in id_map:
+        ex_ids = id_map[qid]
+        all_answers = [data_dict['answer'][idx] for idx in ex_ids]
+        data_dict_collapsed['question'].append(data_dict['question'][ex_ids[0]])
+        data_dict_collapsed['context'].append(data_dict['context'][ex_ids[0]])
+        data_dict_collapsed['id'].append(qid)
+        data_dict_collapsed['answer'].append({'answer_start': [answer['answer_start'] for answer in all_answers],
+                                              'text': [answer['text'] for answer in all_answers]})
+    return data_dict_collapsed
 
 def add_token_positions(encodings, answers, tokenizer):
     start_positions = []
@@ -236,7 +305,7 @@ def eval_dicts(gold_dict, pred_dict):
     for curr_id in pred_dict:
         total += 1
         index = id2index[curr_id]
-        ground_truths = [gold_dict['answer'][index]['text']]
+        ground_truths = gold_dict['answer'][index]['text']
         prediction = pred_dict[curr_id]
         em += metric_max_over_ground_truths(compute_em, prediction, ground_truths)
         f1 += metric_max_over_ground_truths(compute_f1, prediction, ground_truths)

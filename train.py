@@ -88,8 +88,8 @@ def prepare_train_data(dataset_dict, tokenizer):
         sample_index = sample_mapping[i]
         answer = dataset_dict['answer'][sample_index]
         # Start/end character index of the answer in the text.
-        start_char = answer['answer_start']
-        end_char = start_char + len(answer['text'])
+        start_char = answer['answer_start'][0]
+        end_char = start_char + len(answer['text'][0])
         tokenized_examples['id'].append(dataset_dict['id'][sample_index])
         tokenized_examples['context'].append(dataset_dict['context'][sample_index])
         tokenized_examples['question'].append(dataset_dict['question'][sample_index])
@@ -122,7 +122,7 @@ def prepare_train_data(dataset_dict, tokenizer):
             context = tokenized_examples['context'][-1]
             offset_st = offsets[tokenized_examples['start_positions'][-1]][0]
             offset_en = offsets[tokenized_examples['end_positions'][-1]][1]
-            if context[offset_st : offset_en] != answer['text']:
+            if context[offset_st : offset_en] != answer['text'][0]:
                 print("Inaccurate")
 
     return tokenized_examples
@@ -152,7 +152,10 @@ class Trainer():
         self.device = args.device
         self.eval_every = args.eval_every
         self.path = args.run_name
+        self.num_visuals = args.num_visuals
+        self.save_dir = args.save_dir
         self.log = log
+        self.visualize_predictions = args.visualize_predictions
         if not os.path.exists(self.path):
             os.makedirs(self.path)
 
@@ -206,7 +209,7 @@ class Trainer():
         optim = AdamW(model.parameters(), lr=self.lr)
         global_idx = 0
         best_scores = {'F1': -1.0, 'EM': -1.0}
-        tbx = SummaryWriter(self.args.save_dir)
+        tbx = SummaryWriter(self.save_dir)
 
         for epoch_num in range(self.num_epochs):
             self.log.info(f'Epoch: {epoch_num}')
@@ -223,39 +226,46 @@ class Trainer():
                                     end_positions=end_positions)
                     loss = outputs[0]
                     loss.backward()
-                    self.log.info(f'{global_idx}: {loss.item()}')
                     optim.step()
                     progress_bar.update(len(input_ids))
                     progress_bar.set_postfix(epoch=epoch_num, NLL=loss.item())
                     tbx.add_scalar('train/NLL', loss.item(), global_idx)
                     if (global_idx % self.eval_every) == 0:
                         self.log.info(f'Evaluating at step {global_idx}...')
-                        curr_score = self.evaluate(model, eval_dataloader, val_dict)
+                        preds, curr_score = self.evaluate(model, eval_dataloader, val_dict, return_preds=True)
                         results_str = ', '.join(f'{k}: {v:05.2f}' for k, v in curr_score.items())
                         self.log.info('Visualizing in TensorBoard...')
                         for k, v in curr_score.items():
-                            tbx.add_scalar(f'dev/{k}', v, global_idx)
+                            tbx.add_scalar(f'val/{k}', v, global_idx)
                         self.log.info(f'Eval {results_str}')
+                        if self.visualize_predictions:
+                            util.visualize(tbx,
+                                           pred_dict=preds,
+                                           gold_dict=val_dict,
+                                           step=global_idx,
+                                           split='val',
+                                           num_visuals=self.num_visuals)
                         if curr_score['F1'] >= best_scores['F1']:
                             best_scores = curr_score
                             self.save(model)
                     global_idx += 1
         return best_scores
 
-def get_dataset(args, data_dir, tokenizer, split_name):
-    datasets = args.datasets.split(',')
+def get_dataset(args, datasets, data_dir, tokenizer, split_name):
+    datasets = datasets.split(',')
     dataset_dict = None
     dataset_name=''
     for dataset in datasets:
         dataset_name += f'_{dataset}'
-        dataset_dict_curr = util.read_squad(f'{dataset_dict}/{dataset}')
+        dataset_dict_curr = util.read_squad(f'{data_dir}/{dataset}')
         dataset_dict = util.merge(dataset_dict, dataset_dict_curr)
     data_encodings = read_and_process(args, tokenizer, dataset_dict, data_dir, dataset_name, split_name)
-    return util.QADataset(data_encodings), dataset_dict
+    return util.QADataset(data_encodings, train=(split_name=='train')), dataset_dict
 
 def main():
     # define parser and arguments
     args = get_train_test_args()
+    args.save_dir = util.get_save_dir(args.save_dir, args.run_name, args.do_train)
     log = util.get_logger(args.save_dir, args.run_name)
     log.info(f'Args: {json.dumps(vars(args), indent=4, sort_keys=True)}')
     args.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -266,8 +276,8 @@ def main():
     trainer = Trainer(args, log)
 
     if args.do_train:
-        train_dataset, _ = get_dataset(args, args.train_dir, tokenizer, 'train')
-        val_dataset, val_dict = get_dataset(args, args.val_dir, tokenizer, 'val')
+        train_dataset, _ = get_dataset(args, args.train_datasets, args.train_dir, tokenizer, 'train')
+        val_dataset, val_dict = get_dataset(args, args.train_datasets, args.val_dir, tokenizer, 'val')
         train_loader = DataLoader(train_dataset,
                                 batch_size=args.batch_size,
                                 sampler=RandomSampler(train_dataset))
@@ -276,7 +286,7 @@ def main():
                                 sampler=SequentialSampler(val_dataset))
         best_scores = trainer.train(model, train_loader, val_loader, val_dict)
     if args.do_test:
-        test_dataset, test_dict = get_dataset(args, args.test_dir, tokenizer, 'test')
+        test_dataset, test_dict = get_dataset(args, args.test_datasets, args.test_dir, tokenizer, 'test')
         test_loader = DataLoader(test_dataset,
                                  batch_size=args.batch_size,
                                  sampler=SequentialSampler(test_dataset))
