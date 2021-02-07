@@ -265,7 +265,6 @@ def get_dataset(args, datasets, data_dir, tokenizer, split_name):
 def main():
     # define parser and arguments
     args = get_train_test_args()
-    args.save_dir = util.get_save_dir(args.save_dir, args.run_name, args.do_train)
     log = util.get_logger(args.save_dir, args.run_name)
     log.info(f'Args: {json.dumps(vars(args), indent=4, sort_keys=True)}')
     args.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -276,6 +275,7 @@ def main():
     trainer = Trainer(args, log)
 
     if args.do_train:
+        args.save_dir = util.get_save_dir(args.save_dir, args.run_name, args.do_train)
         train_dataset, _ = get_dataset(args, args.train_datasets, args.train_dir, tokenizer, 'train')
         val_dataset, val_dict = get_dataset(args, args.train_datasets, args.val_dir, tokenizer, 'val')
         train_loader = DataLoader(train_dataset,
@@ -286,11 +286,13 @@ def main():
                                 sampler=SequentialSampler(val_dataset))
         best_scores = trainer.train(model, train_loader, val_loader, val_dict)
     if args.do_test:
+        model = DistilBertForQuestionAnswering.from_pretrained(args.run_name)
+        model.to(args.device)
         test_dataset, test_dict = get_dataset(args, args.test_datasets, args.test_dir, tokenizer, 'test')
         test_loader = DataLoader(test_dataset,
                                  batch_size=args.batch_size,
                                  sampler=SequentialSampler(test_dataset))
-        test_scores, test_preds = trainer.evaluate(model, test_loader,
+        test_preds, test_scores = trainer.evaluate(model, test_loader,
                                                    test_dict, return_preds=True,
                                                    split='test')
         # Write submission file
