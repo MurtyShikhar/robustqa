@@ -66,6 +66,7 @@ def prepare_train_data(dataset_dict, tokenizer):
     tokenized_examples["start_positions"] = []
     tokenized_examples["end_positions"] = []
     tokenized_examples['id'] = []
+    inaccurate = 0
     for i, offsets in enumerate(offset_mapping):
         # We will label impossible answers with the index of the CLS token.
         input_ids = tokenized_examples["input_ids"][i]
@@ -109,8 +110,10 @@ def prepare_train_data(dataset_dict, tokenizer):
             offset_st = offsets[tokenized_examples['start_positions'][-1]][0]
             offset_en = offsets[tokenized_examples['end_positions'][-1]][1]
             if context[offset_st : offset_en] != answer['text'][0]:
-                print("Inaccurate")
+                inaccurate += 1
 
+    total = len(tokenized_examples['id'])
+    print(f"Preprocessing not completely accurate for {inaccurate}/{total} instances")
     return tokenized_examples
 
 
