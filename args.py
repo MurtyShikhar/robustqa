@@ -19,6 +19,7 @@ def get_train_test_args():
     parser.add_argument('--test_datasets', type=str, default='duorc,relation_extraction,textbookqa')
     parser.add_argument('--do_train', action='store_true')
     parser.add_argument('--do_test', action='store_true')
+    parser.add_argument('--sub_file', type=str, default='')
     parser.add_argument('--visualize_predictions', action='store_true')
     parser.add_argument('--eval-every', type=int, default=5000)
     args = parser.parse_args()
