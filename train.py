@@ -33,7 +33,7 @@ def prepare_eval_data(dataset_dict, tokenizer):
     # For evaluation, we will need to convert our predictions to substrings of the context, so we keep the
     # corresponding example_id and we will store the offset mappings.
     tokenized_examples["id"] = []
-    for i in range(len(tokenized_examples["input_ids"])):
+    for i in tqdm(range(len(tokenized_examples["input_ids"]))):
         # Grab the sequence corresponding to that example (to know what is the context and what is the question).
         sequence_ids = tokenized_examples.sequence_ids(i)
         # One example can give several spans, this is the index of the example containing this span of text.
@@ -67,7 +67,7 @@ def prepare_train_data(dataset_dict, tokenizer):
     tokenized_examples["end_positions"] = []
     tokenized_examples['id'] = []
     inaccurate = 0
-    for i, offsets in enumerate(offset_mapping):
+    for i, offsets in enumerate(tqdm(offset_mapping)):
         # We will label impossible answers with the index of the CLS token.
         input_ids = tokenized_examples["input_ids"][i]
         cls_index = input_ids.index(tokenizer.cls_token_id)
@@ -265,7 +265,9 @@ def main():
 
     if args.do_train:
         args.save_dir = util.get_save_dir(args.save_dir, args.run_name, args.do_train)
+        log.info("Preparing Training Data...")
         train_dataset, _ = get_dataset(args, args.train_datasets, args.train_dir, tokenizer, 'train')
+        log.info("Preparing Validation Data...")
         val_dataset, val_dict = get_dataset(args, args.train_datasets, args.val_dir, tokenizer, 'val')
         train_loader = DataLoader(train_dataset,
                                 batch_size=args.batch_size,
