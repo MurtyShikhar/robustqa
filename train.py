@@ -254,6 +254,8 @@ def get_dataset(args, datasets, data_dir, tokenizer, split_name):
 def main():
     # define parser and arguments
     args = get_train_test_args()
+    if not os.path.exists(args.save_dir):
+        os.makedirs(args.save_dir)
     log = util.get_logger(args.save_dir, args.run_name)
     log.info(f'Args: {json.dumps(vars(args), indent=4, sort_keys=True)}')
     args.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
