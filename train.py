@@ -140,7 +140,7 @@ class Trainer():
         self.num_epochs = args.num_epochs
         self.device = args.device
         self.eval_every = args.eval_every
-        self.path = args.run_name
+        self.path = os.path.join(args.save_dir, 'checkpoint')
         self.num_visuals = args.num_visuals
         self.save_dir = args.save_dir
         self.log = log
@@ -256,18 +256,18 @@ def main():
     args = get_train_test_args()
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
-    args.save_dir = util.get_save_dir(args.save_dir, args.run_name, args.do_train)
-    log = util.get_logger(args.save_dir, args.run_name)
-    log.info(f'Args: {json.dumps(vars(args), indent=4, sort_keys=True)}')
-    args.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    args.save_dir = util.get_save_dir(args.save_dir, args.run_name)
 
     util.set_seed(args.seed)
     model = DistilBertForQuestionAnswering.from_pretrained("distilbert-base-uncased")
     tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
-    trainer = Trainer(args, log)
 
     if args.do_train:
+        log = util.get_logger(args.save_dir, 'log_train')
+        log.info(f'Args: {json.dumps(vars(args), indent=4, sort_keys=True)}')
         log.info("Preparing Training Data...")
+        args.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        trainer = Trainer(args, log)
         train_dataset, _ = get_dataset(args, args.train_datasets, args.train_dir, tokenizer, 'train')
         log.info("Preparing Validation Data...")
         val_dataset, val_dict = get_dataset(args, args.train_datasets, args.val_dir, tokenizer, 'val')
@@ -278,24 +278,31 @@ def main():
                                 batch_size=args.batch_size,
                                 sampler=SequentialSampler(val_dataset))
         best_scores = trainer.train(model, train_loader, val_loader, val_dict)
-    if args.do_test:
-        model = DistilBertForQuestionAnswering.from_pretrained(args.run_name)
+    if args.do_eval:
+        args.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        split_name = 'test' if 'test' in args.eval_dir else 'validation'
+        log = util.get_logger(args.save_dir, f'log_{split_name}')
+        trainer = Trainer(args, log)
+        checkpoint_path = os.path.join(args.save_dir, 'checkpoint')
+        model = DistilBertForQuestionAnswering.from_pretrained(args.checkpoint_path)
         model.to(args.device)
-        test_dataset, test_dict = get_dataset(args, args.test_datasets, args.test_dir, tokenizer, 'test')
-        test_loader = DataLoader(test_dataset,
+        eval_dataset, eval_dict = get_dataset(args, args.eval_datasets, args.eval_dir, tokenizer, split_name)
+        eval_loader = DataLoader(eval_dataset,
                                  batch_size=args.batch_size,
-                                 sampler=SequentialSampler(test_dataset))
-        test_preds, test_scores = trainer.evaluate(model, test_loader,
-                                                   test_dict, return_preds=True,
-                                                   split='test')
+                                 sampler=SequentialSampler(eval_dataset))
+        eval_preds, eval_scores = trainer.evaluate(model, eval_loader,
+                                                   eval_dict, return_preds=True,
+                                                   split=split_name)
+        results_str = ', '.join(f'{k}: {v:05.2f}' for k, v in eval_scores.items())
+        log.info(f'Eval {results_str}')
         # Write submission file
-        sub_path = os.path.join(args.save_dir, 'test' + '_' + args.sub_file)
+        sub_path = os.path.join(args.save_dir, split_name + '_' + args.sub_file)
         log.info(f'Writing submission file to {sub_path}...')
         with open(sub_path, 'w', newline='', encoding='utf-8') as csv_fh:
             csv_writer = csv.writer(csv_fh, delimiter=',')
             csv_writer.writerow(['Id', 'Predicted'])
-            for uuid in sorted(test_preds):
-                csv_writer.writerow([uuid, test_preds[uuid]])
+            for uuid in sorted(eval_preds):
+                csv_writer.writerow([uuid, eval_preds[uuid]])
 
 
 if __name__ == '__main__':
