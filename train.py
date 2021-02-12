@@ -261,12 +261,12 @@ def main():
     args.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     util.set_seed(args.seed)
+    args.save_dir = util.get_save_dir(args.save_dir, args.run_name, args.do_train)
     model = DistilBertForQuestionAnswering.from_pretrained("distilbert-base-uncased")
     tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
     trainer = Trainer(args, log)
 
     if args.do_train:
-        args.save_dir = util.get_save_dir(args.save_dir, args.run_name, args.do_train)
         log.info("Preparing Training Data...")
         train_dataset, _ = get_dataset(args, args.train_datasets, args.train_dir, tokenizer, 'train')
         log.info("Preparing Validation Data...")
