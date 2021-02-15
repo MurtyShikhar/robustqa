@@ -186,7 +186,7 @@ class QADataset(Dataset):
     def __len__(self):
         return len(self.encodings['input_ids'])
 
-def read_squad(path):
+def read_squad(path, test=False):
     path = Path(path)
     with open(path, 'rb') as f:
         squad_dict = json.load(f)
@@ -196,7 +196,9 @@ def read_squad(path):
             context = passage['context']
             for qa in passage['qas']:
                 question = qa['question']
-                for answer in  qa['answers']:
+                if test and len(qa['answers']) == 0:
+                    qa['answers'] = [{"answer_start": -1, "text": ""}]
+                for answer in qa['answers']:
                     data_dict['question'].append(question)
                     data_dict['context'].append(context)
                     data_dict['id'].append(qa['id'])
