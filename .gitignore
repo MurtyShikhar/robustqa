@@ -1,0 +1,12 @@
+# IDE settings
+.idea/**
+
+# Python artifacts
+**/__pycache__/**
+**/*.pyc
+
+# Datasets
+datasets/**
+
+# Checkpoints and logs
+save/**
