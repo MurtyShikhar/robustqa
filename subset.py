@@ -1,11 +1,7 @@
 import args
 import json
-import numpy as np
 
 from collections import Counter
-
-from train import get_dataset
-from transformers import DistilBertTokenizerFast
 
 def read_data(directory, datasets):
     dataset_dict = {}
