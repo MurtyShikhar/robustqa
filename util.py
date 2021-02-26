@@ -193,7 +193,12 @@ def read_squad(path):
         squad_dict = json.load(f)
     data_dict = {'question': [], 'context': [], 'id': [], 'answer': [], 'topic_id': []}
     for group in squad_dict['data']:
-        topic_id = topic_id_pair[group['topic']]
+        if 'topic' in group:
+            # only training data has topic
+            topic_id = topic_id_pair[group['topic']]
+        else:
+            # topic_id isn't used in eval data
+            topic_id = -1 
         for passage in group['paragraphs']:
             context = passage['context']
             for qa in passage['qas']:
