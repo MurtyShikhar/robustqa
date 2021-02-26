@@ -22,5 +22,7 @@ def get_train_test_args():
     parser.add_argument('--sub-file', type=str, default='')
     parser.add_argument('--visualize-predictions', action='store_true')
     parser.add_argument('--eval-every', type=int, default=5000)
+
+    parser.add_argument('--subset_keep_percentage', type=float, default=0.1)
     args = parser.parse_args()
     return args
