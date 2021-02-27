@@ -182,6 +182,7 @@ class QADataset(Dataset):
         if train:
             self.keys += ['topic_id']
             self.weights, self.num_topic = calculate_weights(encodings)
+        print (self.keys)
         assert(all(key in self.encodings for key in self.keys))
 
     def __getitem__(self, idx):
