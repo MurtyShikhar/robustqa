@@ -15,7 +15,7 @@ def main():
     args["tune"] = True
 
     args["lr"] = tune.loguniform(1e-4, 1e-1)
-    args["batch_size"] = tune.choice([2, 4, 8, 16, 32, 64, 128, 256, 512])
+    args["batch_size"] = tune.choice(args["tune_batch_sizes"])
     args["seed"] = tune.randint(1, 100)
     args["adam_weight_decay"] = tune.loguniform(1e-4, 1e-1)
 
@@ -26,7 +26,7 @@ def main():
         config=args,
         local_dir="tune_results",
         num_samples=args["num_tune_samples"],
-        resources_per_trial={"cpu": 2, "gpu": args["num_gpu_for_tune"]},
+        resources_per_trial={"cpu": args["num_cpu_per_test"], "gpu": args["num_gpu_per_test"]},
     )
     
     # trial results automatically get logged by tune
