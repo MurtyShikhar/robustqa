@@ -143,6 +143,8 @@ class Trainer():
         self.lr = args["lr"]
         self.num_epochs = args["num_epochs"]
         self.wd = args["adam_weight_decay"]
+        self.discriminator_lr = args["discriminator_lr"]
+        self.discriminator_momentum = args["discriminator_momentum"]
 
         self.device = args["device"]
         self.eval_every = args["eval_every"]
@@ -228,7 +230,7 @@ class Trainer():
         if self.discriminator is not None:
             # TODO: use different learning rate for the discriminator?
             # TODO: does weight decay for the discriminator really make sense?
-            discrim_optimizer = AdamW(self.discriminator.parameters(), lr=self.lr)  # there's a tunable weight decay coefficient hidden in here!
+            discrim_optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.discriminator_lr, momentum=self.discriminator_momentum)
             discrim_loss = None
 
         for epoch_num in range(self.num_epochs):

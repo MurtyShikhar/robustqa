@@ -14,10 +14,15 @@ def main():
     args = get_train_test_args()
     args["tune"] = True
 
+    # qa model parameters
     args["lr"] = tune.loguniform(1e-4, 1e-1)
     args["batch_size"] = tune.choice(args["tune_batch_sizes"])
     args["seed"] = tune.randint(1, 100)
     args["adam_weight_decay"] = tune.loguniform(1e-4, 1e-1)
+
+    # discriminator parameters
+    args["discriminator_lr"] = tune.loguniform(1e-4, 1e-1)
+    args["discriminator_momentum"] = tune.uniform(0.8, 0.95)
 
     tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
 
