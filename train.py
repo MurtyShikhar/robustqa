@@ -380,15 +380,11 @@ class Trainer():
                         preds, curr_score = self.evaluate(model, eval_dataloader, val_dict, return_preds=True)
                         results_str = ', '.join(f'{k}: {v:05.2f}' for k, v in curr_score.items())
 
-                        if report: # report performance back to tune
-                            tune.report(F1=curr_score["F1"])
-                            tune.report(EM=curr_score["EM"])
-
                         self.log.info('Visualizing in TensorBoard...')
                         for k, v in curr_score.items():
                             tbx.add_scalar(f'val/{k}', v, global_idx)
 
-                            if tune:
+                            if report:
                                 tune.report(f'val/{k}', v)
 
                         self.log.info(f'Eval {results_str}')
