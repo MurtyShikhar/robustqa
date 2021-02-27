@@ -2,9 +2,14 @@ import argparse
 
 def get_train_test_args():
     parser = argparse.ArgumentParser()
+    # hyperparameters
     parser.add_argument('--batch-size', type=int, default=16)
     parser.add_argument('--num-epochs', type=int, default=3)
     parser.add_argument('--lr', type=float, default=3e-5)
+    parser.add_argument('--adam-weight-decay', type=float, default=0)
+    parser.add_argument('--discriminator-lr', type=float, default=3e-5)
+    parser.add_argument('--discriminator-momentum', type=float, default=0.8)
+
     parser.add_argument('--num-visuals', type=int, default=10)
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--save-dir', type=str, default='save/')
@@ -22,13 +27,15 @@ def get_train_test_args():
     parser.add_argument('--sub-file', type=str, default='')
     parser.add_argument('--visualize-predictions', action='store_true')
     parser.add_argument('--eval-every', type=int, default=5000)
-
     parser.add_argument('--subset-keep-percentage', type=float, default=0.01)
+
+    # arguments for hyperparameter search
     parser.add_argument('--num-gpu-per-test', type=int, default=0)
     parser.add_argument('--num-cpu-per-test', type=int, default=1)
     parser.add_argument('--num-tune-samples', type=int, default=10)
     parser.add_argument('--tune-batch-sizes', type=int, nargs="+", default=[32])
-    parser.add_argument('--use-checkpoint', type=bool)
+    parser.add_argument('--use-checkpoint', action='store_true')
+    parser.add_argument('--tune', action='store_true')
 
     args = parser.parse_args()
     return vars(args) # return as dict to support hyperparam search
