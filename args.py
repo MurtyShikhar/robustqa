@@ -28,6 +28,7 @@ def get_train_test_args():
     parser.add_argument('--num-cpu-per-test', type=int, default=1)
     parser.add_argument('--num-tune-samples', type=int, default=10)
     parser.add_argument('--tune-batch-sizes', type=int, nargs="+", default=[32])
+    parser.add_argument('--use-checkpoint', type=bool)
 
     args = parser.parse_args()
     return vars(args) # return as dict to support hyperparam search

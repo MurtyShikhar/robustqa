@@ -357,7 +357,11 @@ def do_train(args, tokenizer):
         os.makedirs(args["save_dir"])
     args["save_dir"] = util.get_save_dir(args["save_dir"], args["run_name"])
 
-    model = DistilBertForQuestionAnswering.from_pretrained("distilbert-base-uncased")
+    if args["use_checkpoint"]:
+        checkpoint_path = os.path.join(args["save_dir"], 'checkpoint')
+        model = DistilBertForQuestionAnswering.from_pretrained(checkpoint_path)
+    else:
+        model = DistilBertForQuestionAnswering.from_pretrained("distilbert-base-uncased")
 
     log = util.get_logger(args["save_dir"], 'log_train')
     log.info(f'Args: {json.dumps(args, indent=4, sort_keys=True)}')
