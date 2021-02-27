@@ -19,8 +19,6 @@ from DomainAdversarial import DomainDiscriminator
 
 from tqdm import tqdm
 
-from ray import tune
-
 def prepare_eval_data(dataset_dict, tokenizer):
     tokenized_examples = tokenizer(dataset_dict['question'],
                                    dataset_dict['context'],
