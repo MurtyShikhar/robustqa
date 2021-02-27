@@ -5,12 +5,15 @@ import logging
 import pickle
 import string
 import re
+import uuid
 from pathlib import Path
 from collections import Counter, OrderedDict, defaultdict as ddict
 import torch
 import numpy as np
 from tqdm import tqdm
 from torch.utils.data import Dataset
+
+UUID = str(uuid.uuid1()) + str(os.getpid())
 
 def set_seed(seed):
     random.seed(seed)
@@ -178,6 +181,7 @@ class QADataset(Dataset):
         self.keys = ['input_ids', 'attention_mask']
         if train:
             self.keys += ['start_positions', 'end_positions', 'topic_id']
+            self.weights, self.num_topic = calculate_weights(encodings)
         assert(all(key in self.encodings for key in self.keys))
 
     def __getitem__(self, idx):
@@ -186,15 +190,40 @@ class QADataset(Dataset):
     def __len__(self):
         return len(self.encodings['input_ids'])
 
+    def topic_weights(self):
+        return self.weights
+
+    def num_topics(self):
+        return self.num_topic
+
+def calculate_weights(Dataset):
+    if 'topic_id' in Dataset:
+        topic_count = ddict(int)
+        for topic in Dataset['topic_id']:
+            topic_count[topic] += 1
+        num_topics = len(topic_count)
+        weights = [1/topic_count[i] for i in sorted(topic_count.keys())]
+        return weights, num_topics
+    else:
+        return [], 0
+
 def read_squad(path):
     path = Path(path)
-    topic_id_pair = json.loads(open("topic_id_pair").read())
+    # a unique <topic:id> mapping per process
+    topic_id_file = "topic_id_pair" + UUID
+    if os.path.exists(topic_id_file):
+        topic_id_pair = json.loads(open(topic_id_file).read())
+    else:
+        topic_id_pair = {}
     with open(path, 'rb') as f:
         squad_dict = json.load(f)
     data_dict = {'question': [], 'context': [], 'id': [], 'answer': [], 'topic_id': []}
     for group in squad_dict['data']:
         if 'topic' in group:
             # only training data has topic
+            size = len(topic_id_pair)
+            if group['topic'] not in topic_id_pair:
+                topic_id_pair[group['topic']] = size
             topic_id = topic_id_pair[group['topic']]
         else:
             # topic_id isn't used in eval data
@@ -232,6 +261,8 @@ def read_squad(path):
             all_answers = [data_dict['answer'][idx] for idx in ex_ids]
             data_dict_collapsed['answer'].append({'answer_start': [answer['answer_start'] for answer in all_answers],
                                                   'text': [answer['text'] for answer in all_answers]})
+    with open(topic_id_file, 'w') as f:
+        json.dump(topic_id_pair, f)
     return data_dict_collapsed
 
 def add_token_positions(encodings, answers, tokenizer):
