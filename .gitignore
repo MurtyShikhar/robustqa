@@ -1,5 +1,6 @@
 # IDE settings
 .idea/**
+*.DS_Store
 
 # Python artifacts
 **/__pycache__/**
@@ -10,3 +11,6 @@ datasets/**
 
 # Checkpoints and logs
 save/**
+
+# tune_results
+tune_results/**

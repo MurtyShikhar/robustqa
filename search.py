@@ -1,37 +1,40 @@
-import numpy as np
+import os
 from ray import tune
+from functools import partial
 
 from transformers import DistilBertTokenizerFast
-from transformers import DistilBertForQuestionAnswering
 
-import util
 from args import get_train_test_args
 from train import do_train
 
-# TODO: save hyperparameters that you've tried
-
 def main():
-    args = vars(get_train_test_args())
+    if not os.path.exists("tune_results"):
+        os.makedirs("tune_results")
+
+    args = get_train_test_args()
+    args["tune"] = True
 
     args["lr"] = tune.loguniform(1e-4, 1e-1)
-    args["batch_size"] = tune.choice([2, 4, 8, 16, 32, 64, 128, 256])
-    args["seed"] = tune.sample_from(lambda _: 1 * np.random.randint(1, 100))
-    args["adamw"]
+    args["batch_size"] = tune.choice([2, 4, 8, 16, 32, 64, 128, 256, 512])
+    args["seed"] = tune.randint(1, 100)
+    args["adam_weight_decay"] = tune.loguniform(1e-4, 1e-1)
 
-    print(args)
-    model = DistilBertForQuestionAnswering.from_pretrained("distilbert-base-uncased")
     tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
 
     result = tune.run(
-        do_train,
-        args=args,
-        model=model,
-        tokenizer=tokenizer
+        partial(do_train, tokenizer=tokenizer),
+        config=args,
+        local_dir="tune_results",
+        num_samples=args["num_tune_samples"],
+        resources_per_trial={"cpu": 2, "gpu": args["num_gpu_for_tune"]},
     )
-
-    print("Best config: ", result.get_best_config(
-        metric="loss", mode="min")
-    )
+    
+    # trial results automatically get logged by tune
+    best_trial = result.get_best_trial("loss", "min", "last")
+    print("Best trial config: {0}".format(best_trial.config))
+    print("Best trial final loss: {0}".format(best_trial.last_result["loss"]))
+    print("Best trial final F1: {0}".format(best_trial.last_result["F1"]))
+    print("Best trial final EM: {0}".format(best_trial.last_result["EM"]))
 
 if __name__ == "__main__":
     main()

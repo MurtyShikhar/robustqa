@@ -20,6 +20,7 @@ def read_data(directory, datasets):
     return dataset_dict, topics_list
 
 def create_subsets(directory, datasets):
+    print(f'Creating subsets in {directory}')
     dataset_dict, topics_list = read_data(directory, datasets)
     
     # compute count of entries per topic
@@ -27,7 +28,7 @@ def create_subsets(directory, datasets):
     topics_count = dict(Counter(topics_list))
     for key in topics_count.keys():
         # keep at least 3 per topic
-        topics_count[key] = max(3, int(topics_count[key] * args.subset_keep_percentage))
+        topics_count[key] = max(3, int(topics_count[key] * args["subset_keep_percentage"]))
     
     for dataset in datasets:
         dataset_subset = []
@@ -50,7 +51,7 @@ def create_subsets(directory, datasets):
 
 if __name__ == "__main__":
     args = args.get_train_test_args()
-    datasets = args.train_datasets.split(',')
+    datasets = args["train_datasets"].split(',')
 
-    create_subsets(args.train_dir, datasets)
-    create_subsets(args.val_dir, datasets)
+    create_subsets(args["train_dir"], datasets)
+    create_subsets(args["val_dir"], datasets)

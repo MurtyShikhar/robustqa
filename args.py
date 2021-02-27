@@ -23,6 +23,9 @@ def get_train_test_args():
     parser.add_argument('--visualize-predictions', action='store_true')
     parser.add_argument('--eval-every', type=int, default=5000)
 
-    parser.add_argument('--subset_keep_percentage', type=float, default=0.1)
+    parser.add_argument('--subset-keep-percentage', type=float, default=0.01)
+    parser.add_argument('--num-gpu-for-tune', type=int, default=0)
+    parser.add_argument('--num-tune-samples', type=int, default=10)
+
     args = parser.parse_args()
-    return args
+    return vars(args) # return as dict to support hyperparam search
