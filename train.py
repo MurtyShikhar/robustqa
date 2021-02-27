@@ -313,8 +313,8 @@ class Trainer():
                         for k, v in curr_score.items():
                             tbx.add_scalar(f'val/{k}', v, global_idx)
 
-                            # if tune: # TODO: do we want to log this value to tune?
-                            #     tune.report(f'val/{k}', v)
+                            if tune:
+                                tune.report(f'val/{k}', v)
 
                         self.log.info(f'Eval {results_str}')
                         if self.visualize_predictions:
