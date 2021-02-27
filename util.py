@@ -198,11 +198,12 @@ class QADataset(Dataset):
 
 def calculate_weights(Dataset):
     if 'topic_id' in Dataset:
+        total = len(Dataset['topic_id'])
         topic_count = ddict(int)
         for topic in Dataset['topic_id']:
             topic_count[topic] += 1
         num_topics = len(topic_count)
-        weights = [1/topic_count[i] for i in sorted(topic_count.keys())]
+        weights = [total/topic_count[i] for i in sorted(topic_count.keys())]
         return weights, num_topics
     else:
         return [], 0
