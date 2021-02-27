@@ -3,6 +3,7 @@ import json
 import os
 from collections import OrderedDict
 from typing import Optional
+import numpy as np
 
 import torch
 import csv
@@ -154,8 +155,17 @@ class Trainer():
         self.discriminator = discriminator
         self.num_domains = 20  # TODO: We should be able set this to a meaningful number based on the data
         self.adv_loss_weight = .01
+        self.nll_weights = None  # This will be initialized later
         if not os.path.exists(self.path):
             os.makedirs(self.path)
+
+    def init_nll_weights(self, train_dataloader):
+        weights_numpy = np.zeros((self.num_domains,))
+        dataset_weights = train_dataloader.dataset.topic_weights()
+        for i in range(len(dataset_weights)):
+            weights_numpy[i%self.num_domains] += dataset_weights[i]
+        weights_numpy /= self.num_domains
+        self.nll_weights = torch.Tensor(weights_numpy).to(self.device)
 
     def save(self, model):
         model.save_pretrained(self.path)
@@ -225,11 +235,13 @@ class Trainer():
         best_scores = {'F1': -1.0, 'EM': -1.0}
         tbx = SummaryWriter(self.save_dir)
 
+        if self.nll_weights is None:
+            self.init_nll_weights(train_dataloader)
+
         if self.discriminator is not None:
             # TODO: use different learning rate for the discriminator?
             # TODO: does weight decay for the discriminator really make sense?
             discrim_optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.discriminator_lr, momentum=self.discriminator_momentum)
-            discrim_loss = None
 
         for epoch_num in range(self.num_epochs):
             self.log.info(f'Epoch: {epoch_num}')
@@ -276,7 +288,7 @@ class Trainer():
                         hidden_cls = outputs.hidden_states[6][:, 0, :]  # TODO: verify this is actually the right layer
                         log_prob = self.discriminator(hidden_cls)
 
-                        discrim_loss = self.get_discriminator_loss(discrim_loss, log_prob, labels)
+                        discrim_loss = self.get_discriminator_loss(log_prob, labels)
 
                         # TODO: track some statistic about discriminator accuracy?
 
@@ -330,10 +342,10 @@ class Trainer():
                     global_idx += 1
         return best_scores
 
-    def get_discriminator_loss(self, prev_discrim_loss, log_prob, labels):
+    def get_discriminator_loss(self, log_prob, labels):
         # In the paper, they also use a running average loss for the QA model.
-        # TODO: Do we want to pass weights to this to deal with our imbalanced set of data?
-        return torch.nn.NLLLoss()(log_prob, labels)
+        return torch.nn.NLLLoss(weight=self.nll_weights)(log_prob, labels)
+
 
 def get_dataset(args, datasets, data_dir, tokenizer, split_name):
     datasets = datasets.split(',')
