@@ -55,7 +55,6 @@ def prepare_eval_data(dataset_dict, tokenizer):
         start_char = answer['answer_start'][0]
         end_char = start_char + len(answer['text'][0])
         tokenized_examples['id'].append(dataset_dict['id'][sample_index])
-        tokenized_examples['topic_id'].append(dataset_dict['topic_id'][sample_index])
         # Start token index of the current span in the text.
         token_start_index = 0
         while sequence_ids[token_start_index] != 1:
@@ -243,7 +242,8 @@ class Trainer():
                 if split == 'validation':
                     outputs = model(input_ids, attention_mask=attention_mask,
                                     start_positions=batch['start_positions'].to(device),
-                                    end_positions=batch['end_positions'].to(device))
+                                    end_positions=batch['end_positions'].to(device),
+                                    output_hidden_states=True)
                     # Forward
                     start_logits, end_logits = outputs.start_logits, outputs.end_logits
                     qa_loss_sum += outputs.loss.item()
