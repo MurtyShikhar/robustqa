@@ -55,7 +55,6 @@ def prepare_eval_data(dataset_dict, tokenizer):
         start_char = answer['answer_start'][0]
         end_char = start_char + len(answer['text'][0])
         tokenized_examples['id'].append(dataset_dict['id'][sample_index])
-        #tokenized_examples['topic_id'].append(dataset_dict['topic_id'][sample_index])
         # Start token index of the current span in the text.
         token_start_index = 0
         while sequence_ids[token_start_index] != 1:
@@ -241,13 +240,23 @@ class Trainer():
                 attention_mask = batch['attention_mask'].to(device)
                 batch_size = len(input_ids)
                 if split == 'validation':
-                    outputs = model(input_ids, attention_mask=attention_mask)#,
-                                    #start_positions=batch['start_positions'].to(device),
-                                    #end_positions=batch['end_positions'].to(device))
+                    outputs = model(input_ids, attention_mask=attention_mask,
+                                    start_positions=batch['start_positions'].to(device),
+                                    end_positions=batch['end_positions'].to(device),
+                                    output_hidden_states=True)
                     # Forward
                     start_logits, end_logits = outputs.start_logits, outputs.end_logits
+                    qa_loss_sum += outputs.loss.item()
 
-                    qa_loss_sum += 1  # TODO: we need to include the start and end positions of the eval data in the batch for them to see loss here.
+                    if self.discriminator is not None:
+                        hidden_cls = outputs.hidden_states[6][:, 0, :].to(device)
+
+                        discrim_log_prob = self.discriminator(hidden_cls).to(device)
+                        targets = torch.ones_like(discrim_log_prob) * (1 / self.num_domains)
+                        kl_criterion = torch.nn.KLDivLoss(reduction="batchmean")
+                        adv_loss = kl_criterion(discrim_log_prob, targets)
+
+                        qa_loss_sum += self.adv_loss_weight * adv_loss.item()
 
                 else:
                     outputs = model(input_ids, attention_mask=attention_mask)
@@ -270,7 +279,7 @@ class Trainer():
             results = util.eval_dicts(data_dict, preds)
             results_list = [('F1', results['F1']),
                             ('EM', results['EM']),
-                            ('QA loss', qa_loss_sum/num_batches)]
+                            ('Composite QA loss', qa_loss_sum/num_batches)]
         else:
             results_list = [('F1', -1.0),
                             ('EM', -1.0)]
