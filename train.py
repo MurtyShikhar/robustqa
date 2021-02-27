@@ -55,7 +55,7 @@ def prepare_eval_data(dataset_dict, tokenizer):
         start_char = answer['answer_start'][0]
         end_char = start_char + len(answer['text'][0])
         tokenized_examples['id'].append(dataset_dict['id'][sample_index])
-        tokenized_examples['topic_id'].append(dataset_dict['topic_id'][sample_index])
+        #tokenized_examples['topic_id'].append(dataset_dict['topic_id'][sample_index])
         # Start token index of the current span in the text.
         token_start_index = 0
         while sequence_ids[token_start_index] != 1:
