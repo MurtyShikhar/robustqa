@@ -12,13 +12,14 @@ from transformers import DistilBertForQuestionAnswering
 from transformers import AdamW
 from tensorboardX import SummaryWriter
 
-
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import RandomSampler, SequentialSampler
 from args import get_train_test_args
 from DomainAdversarial import DomainDiscriminator
 
 from tqdm import tqdm
+
+from ray import tune
 
 def prepare_eval_data(dataset_dict, tokenizer):
     tokenized_examples = tokenizer(dataset_dict['question'],
@@ -52,8 +53,6 @@ def prepare_eval_data(dataset_dict, tokenizer):
         ]
 
     return tokenized_examples
-
-
 
 def prepare_train_data(dataset_dict, tokenizer):
     tokenized_examples = tokenizer(dataset_dict['question'],
@@ -123,12 +122,10 @@ def prepare_train_data(dataset_dict, tokenizer):
     print(f"Preprocessing not completely accurate for {inaccurate}/{total} instances")
     return tokenized_examples
 
-
-
 def read_and_process(args, tokenizer, dataset_dict, dir_name, dataset_name, split):
     #TODO: cache this if possible
     cache_path = f'{dir_name}/{dataset_name}_encodings.pt'
-    if os.path.exists(cache_path) and not args.recompute_features:
+    if os.path.exists(cache_path) and not args["recompute_features"]:
         tokenized_examples = util.load_pickle(cache_path)
     else:
         if split=='train':
@@ -138,22 +135,24 @@ def read_and_process(args, tokenizer, dataset_dict, dir_name, dataset_name, spli
         util.save_pickle(tokenized_examples, cache_path)
     return tokenized_examples
 
-
-
 #TODO: use a logger, use tensorboard
 class Trainer():
     def __init__(self, args, log,
                  # Don't pass in this argument if you want to run without a domain-adversarial loss term
                  discriminator: Optional[DomainDiscriminator] = None):
-        self.lr = args.lr
-        self.num_epochs = args.num_epochs
-        self.device = args.device
-        self.eval_every = args.eval_every
-        self.path = os.path.join(args.save_dir, 'checkpoint')
-        self.num_visuals = args.num_visuals
-        self.save_dir = args.save_dir
+        self.lr = args["lr"]
+        self.num_epochs = args["num_epochs"]
+        self.wd = args["adam_weight_decay"]
+        self.discriminator_lr = args["discriminator_lr"]
+        self.discriminator_momentum = args["discriminator_momentum"]
+
+        self.device = args["device"]
+        self.eval_every = args["eval_every"]
+        self.path = os.path.join(args["save_dir"], 'checkpoint')
+        self.num_visuals = args["num_visuals"]
+        self.save_dir = args["save_dir"]
         self.log = log
-        self.visualize_predictions = args.visualize_predictions
+        self.visualize_predictions = args["visualize_predictions"]
         self.discriminator = discriminator
         self.num_domains = 20  # TODO: We should be able set this to a meaningful number based on the data
         self.adv_loss_weight = .01
@@ -218,12 +217,12 @@ class Trainer():
             return preds, results
         return results
 
-    def train(self, model, train_dataloader, eval_dataloader, val_dict):
+    def train(self, model, train_dataloader, eval_dataloader, val_dict, report=False):
         device = self.device
         model.to(device)
         if self.discriminator is not None:
             self.discriminator.to(device)
-        optim = AdamW(model.parameters(), lr=self.lr)  # there's a tunable weight decay coefficient hidden in here!
+        optim = AdamW(model.parameters(), lr=self.lr, weight_decay=self.wd)
         global_idx = 0
         best_scores = {'F1': -1.0, 'EM': -1.0}
         tbx = SummaryWriter(self.save_dir)
@@ -231,7 +230,7 @@ class Trainer():
         if self.discriminator is not None:
             # TODO: use different learning rate for the discriminator?
             # TODO: does weight decay for the discriminator really make sense?
-            discrim_optimizer = AdamW(self.discriminator.parameters(), lr=self.lr)  # there's a tunable weight decay coefficient hidden in here!
+            discrim_optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.discriminator_lr, momentum=self.discriminator_momentum)
             discrim_loss = None
 
         for epoch_num in range(self.num_epochs):
@@ -245,10 +244,12 @@ class Trainer():
 
                     optim.zero_grad()
                     model.train()
+
                     input_ids = batch['input_ids'].to(device)
                     attention_mask = batch['attention_mask'].to(device)
                     start_positions = batch['start_positions'].to(device)
                     end_positions = batch['end_positions'].to(device)
+
                     outputs = model(input_ids, attention_mask=attention_mask,
                                     start_positions=start_positions,
                                     end_positions=end_positions, output_hidden_states=True)
@@ -287,20 +288,36 @@ class Trainer():
                     progress_bar.update(len(input_ids))
                     progress_bar.set_postfix(epoch=epoch_num, NLL=loss.item())
                     tbx.add_scalar('train/NLL', loss.item(), global_idx)
+                        
                     if self.discriminator is not None:
                         # This loss should hypothetically start low, improve, and then get worse.
                         tbx.add_scalar('train/discrim_loss', discrim_loss.item(), global_idx)
 
                         # This loss should hypothetically start high, get worse, and then get lower.
                         tbx.add_scalar('train/discrim_kl_div', adv_loss.item(), global_idx)
+
+                    if report: # report performance back to tune
+                        tune.report(loss=loss.item())
+                        tune.report(discriminator_loss=discrim_loss.item())
+                        tune.report(discriminator_kl_div=adv_loss.item())
+
                     if (global_idx % self.eval_every) == 0:
                         # TODO: add discriminator information?
                         self.log.info(f'Evaluating at step {global_idx}...')
                         preds, curr_score = self.evaluate(model, eval_dataloader, val_dict, return_preds=True)
                         results_str = ', '.join(f'{k}: {v:05.2f}' for k, v in curr_score.items())
+
+                        if report: # report performance back to tune
+                            tune.report(F1=curr_score["F1"])
+                            tune.report(EM=curr_score["EM"])
+
                         self.log.info('Visualizing in TensorBoard...')
                         for k, v in curr_score.items():
                             tbx.add_scalar(f'val/{k}', v, global_idx)
+
+                            if tune:
+                                tune.report(f'val/{k}', v)
+
                         self.log.info(f'Eval {results_str}')
                         if self.visualize_predictions:
                             util.visualize(tbx,
@@ -331,61 +348,84 @@ def get_dataset(args, datasets, data_dir, tokenizer, split_name):
     data_encodings = read_and_process(args, tokenizer, dataset_dict, data_dir, dataset_name, split_name)
     return util.QADataset(data_encodings, train=(split_name=='train')), dataset_dict
 
+def do_train(args, tokenizer):
+    if args["tune"]: 
+        # hacky workaround for ray tune
+        # ray tune will change the cwd to tune_results/[current_results]/[results]
+        # we need to change it back to the base directory
+        os.chdir("../../../") 
+
+    if not os.path.exists(args["save_dir"]):
+        os.makedirs(args["save_dir"])
+    args["save_dir"] = util.get_save_dir(args["save_dir"], args["run_name"])
+
+    if args["use_checkpoint"]:
+        checkpoint_path = os.path.join(args["save_dir"], 'checkpoint')
+        model = DistilBertForQuestionAnswering.from_pretrained(checkpoint_path)
+    else:
+        model = DistilBertForQuestionAnswering.from_pretrained("distilbert-base-uncased")
+
+    log = util.get_logger(args["save_dir"], 'log_train')
+    log.info(f'Args: {json.dumps(args, indent=4, sort_keys=True)}')
+    log.info("Preparing Training Data...")
+    args["device"] = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+    discriminator = DomainDiscriminator(20, 768)  # TODO: replace these 'magic numbers' with better param values
+    trainer = Trainer(args, log, discriminator)
+    train_dataset, _ = get_dataset(args, args["train_datasets"], args["train_dir"], tokenizer, 'train')
+
+    log.info("Preparing Validation Data...")
+    val_dataset, val_dict = get_dataset(args, args["train_datasets"], args["val_dir"], tokenizer, 'val')
+
+    train_loader = DataLoader(train_dataset,
+                            batch_size=args["batch_size"],
+                            sampler=RandomSampler(train_dataset))
+    val_loader = DataLoader(val_dataset,
+                            batch_size=args["batch_size"],
+                            sampler=SequentialSampler(val_dataset))
+    best_scores = trainer.train(model, train_loader, val_loader, val_dict, report=args["tune"])
+
+def do_eval(args, tokenizer):
+    args["device"] = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    split_name = 'test' if 'test' in args["eval_dir"] else 'validation'
+    log = util.get_logger(args["save_dir"], f'log_{split_name}')
+
+    trainer = Trainer(args, log)
+    checkpoint_path = os.path.join(args["save_dir"], 'checkpoint')
+    model = DistilBertForQuestionAnswering.from_pretrained(checkpoint_path)
+    model.to(args["device"])
+
+    eval_dataset, eval_dict = get_dataset(args, args["eval_datasets"], args["eval_dir"], tokenizer, split_name)
+    eval_loader = DataLoader(eval_dataset,
+                                batch_size=args["batch_size"],
+                                sampler=SequentialSampler(eval_dataset))
+    eval_preds, eval_scores = trainer.evaluate(model, eval_loader,
+                                                eval_dict, return_preds=True,
+                                                split=split_name)
+
+    results_str = ', '.join(f'{k}: {v:05.2f}' for k, v in eval_scores.items())
+    log.info(f'Eval {results_str}')
+
+    # Write submission file
+    sub_path = os.path.join(args["save_dir"], split_name + '_' + args["sub_file"])
+    log.info(f'Writing submission file to {sub_path}...')
+    with open(sub_path, 'w', newline='', encoding='utf-8') as csv_fh:
+        csv_writer = csv.writer(csv_fh, delimiter=',')
+        csv_writer.writerow(['Id', 'Predicted'])
+        for uuid in sorted(eval_preds):
+            csv_writer.writerow([uuid, eval_preds[uuid]])
+
 def main():
     # define parser and arguments
     args = get_train_test_args()
 
-    util.set_seed(args.seed)
-    model = DistilBertForQuestionAnswering.from_pretrained("distilbert-base-uncased")
+    util.set_seed(args["seed"])
     tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
 
-    if args.do_train:
-        if not os.path.exists(args.save_dir):
-            os.makedirs(args.save_dir)
-        args.save_dir = util.get_save_dir(args.save_dir, args.run_name)
-        log = util.get_logger(args.save_dir, 'log_train')
-        log.info(f'Args: {json.dumps(vars(args), indent=4, sort_keys=True)}')
-        log.info("Preparing Training Data...")
-        args.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
-        discriminator = DomainDiscriminator(20, 768)  # TODO: replace these 'magic numbers' with better param values
-
-        trainer = Trainer(args, log, discriminator)
-        train_dataset, _ = get_dataset(args, args.train_datasets, args.train_dir, tokenizer, 'train')
-        log.info("Preparing Validation Data...")
-        val_dataset, val_dict = get_dataset(args, args.train_datasets, args.val_dir, tokenizer, 'val')
-        train_loader = DataLoader(train_dataset,
-                                batch_size=args.batch_size,
-                                sampler=RandomSampler(train_dataset))
-        val_loader = DataLoader(val_dataset,
-                                batch_size=args.batch_size,
-                                sampler=SequentialSampler(val_dataset))
-        best_scores = trainer.train(model, train_loader, val_loader, val_dict)
-    if args.do_eval:
-        args.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-        split_name = 'test' if 'test' in args.eval_dir else 'validation'
-        log = util.get_logger(args.save_dir, f'log_{split_name}')
-        trainer = Trainer(args, log)
-        checkpoint_path = os.path.join(args.save_dir, 'checkpoint')
-        model = DistilBertForQuestionAnswering.from_pretrained(checkpoint_path)
-        model.to(args.device)
-        eval_dataset, eval_dict = get_dataset(args, args.eval_datasets, args.eval_dir, tokenizer, split_name)
-        eval_loader = DataLoader(eval_dataset,
-                                 batch_size=args.batch_size,
-                                 sampler=SequentialSampler(eval_dataset))
-        eval_preds, eval_scores = trainer.evaluate(model, eval_loader,
-                                                   eval_dict, return_preds=True,
-                                                   split=split_name)
-        results_str = ', '.join(f'{k}: {v:05.2f}' for k, v in eval_scores.items())
-        log.info(f'Eval {results_str}')
-        # Write submission file
-        sub_path = os.path.join(args.save_dir, split_name + '_' + args.sub_file)
-        log.info(f'Writing submission file to {sub_path}...')
-        with open(sub_path, 'w', newline='', encoding='utf-8') as csv_fh:
-            csv_writer = csv.writer(csv_fh, delimiter=',')
-            csv_writer.writerow(['Id', 'Predicted'])
-            for uuid in sorted(eval_preds):
-                csv_writer.writerow([uuid, eval_preds[uuid]])
+    if args["do_train"]:
+        do_train(args, tokenizer)
+    if args["do_eval"]:
+        do_eval(args, tokenizer)
 
 
 if __name__ == '__main__':
