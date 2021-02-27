@@ -14,3 +14,6 @@ save/**
 
 # tune_results
 tune_results/**
+
+# topic_id_pair
+topic_id_pair*
