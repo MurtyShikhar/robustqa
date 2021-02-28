@@ -20,6 +20,37 @@ from DomainAdversarial import DomainDiscriminator
 
 from tqdm import tqdm
 
+def prepare_test_data(dataset_dict, tokenizer):
+    tokenized_examples = tokenizer(dataset_dict['question'],
+                                   dataset_dict['context'],
+                                   truncation="only_second",
+                                   stride=128,
+                                   max_length=384,
+                                   return_overflowing_tokens=True,
+                                   return_offsets_mapping=True,
+                                   padding='max_length')
+    # Since one example might give us several features if it has a long context, we need a map from a feature to
+    # its corresponding example. This key gives us just that.
+    sample_mapping = tokenized_examples.pop("overflow_to_sample_mapping")
+
+    # For evaluation, we will need to convert our predictions to substrings of the context, so we keep the
+    # corresponding example_id and we will store the offset mappings.
+    tokenized_examples["id"] = []
+    for i in tqdm(range(len(tokenized_examples["input_ids"]))):
+        # Grab the sequence corresponding to that example (to know what is the context and what is the question).
+        sequence_ids = tokenized_examples.sequence_ids(i)
+        # One example can give several spans, this is the index of the example containing this span of text.
+        sample_index = sample_mapping[i]
+        tokenized_examples["id"].append(dataset_dict["id"][sample_index])
+        #tokenized_examples['topic_id'].append(dataset_dict['topic_id'][sample_index])
+        # Set to None the offset_mapping that are not part of the context so it's easy to determine if a token
+        # position is part of the context or not.
+        tokenized_examples["offset_mapping"][i] = [
+            (o if sequence_ids[k] == 1 else None)
+            for k, o in enumerate(tokenized_examples["offset_mapping"][i])
+        ]
+    return tokenized_examples
+
 def prepare_eval_data(dataset_dict, tokenizer):
     tokenized_examples = tokenizer(dataset_dict['question'],
                                    dataset_dict['context'],
@@ -415,7 +446,7 @@ def get_dataset(args, datasets, data_dir, tokenizer, split_name):
         dataset_dict_curr = util.read_squad(f'{data_dir}/{dataset}')
         dataset_dict = util.merge(dataset_dict, dataset_dict_curr)
     data_encodings = read_and_process(args, tokenizer, dataset_dict, data_dir, dataset_name, split_name)
-    return util.QADataset(data_encodings, train=(split_name=='train')), dataset_dict
+    return util.QADataset(data_encodings, train=(split_name=='train'), evaluation=(split_name=='validation'), test=(split_name=='test')), dataset_dict
 
 def do_train(args, tokenizer):
     if args["tune"]: 
@@ -428,9 +459,8 @@ def do_train(args, tokenizer):
         os.makedirs(args["save_dir"])
     args["save_dir"] = util.get_save_dir(args["save_dir"], args["run_name"])
 
-    if args["tune_checkpoint_path"] is not None:
-        checkpoint_path = os.path.join(args["tune_checkpoint_path"], 'checkpoint')
-        print(checkpoint_path)
+    if args["use_checkpoint"]:
+        checkpoint_path = os.path.join(args["save_dir"], 'checkpoint')
         model = DistilBertForQuestionAnswering.from_pretrained(checkpoint_path)
     else:
         model = DistilBertForQuestionAnswering.from_pretrained("distilbert-base-uncased")
