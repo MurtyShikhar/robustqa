@@ -459,8 +459,9 @@ def do_train(args, tokenizer):
         os.makedirs(args["save_dir"])
     args["save_dir"] = util.get_save_dir(args["save_dir"], args["run_name"])
 
-    if args["use_checkpoint"]:
-        checkpoint_path = os.path.join(args["save_dir"], 'checkpoint')
+    if args["tune_checkpoint_path"] is not None:
+        checkpoint_path = os.path.join(args["tune_checkpoint_path"], 'checkpoint')
+        print(checkpoint_path)
         model = DistilBertForQuestionAnswering.from_pretrained(checkpoint_path)
     else:
         model = DistilBertForQuestionAnswering.from_pretrained("distilbert-base-uncased")
