@@ -34,7 +34,8 @@ def get_train_test_args():
     parser.add_argument('--num-cpu-per-test', type=int, default=1)
     parser.add_argument('--num-tune-samples', type=int, default=10)
     parser.add_argument('--tune-batch-sizes', type=int, nargs="+", default=[32])
-    parser.add_argument('--use-checkpoint', action='store_true')
+    parser.add_argument('--tune-checkpoint-path', type=str)
+
     parser.add_argument('--tune', action='store_true')
 
     args = parser.parse_args()
