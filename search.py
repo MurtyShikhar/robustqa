@@ -19,10 +19,12 @@ def main():
     args["batch_size"] = tune.choice(args["tune_batch_sizes"])
     args["seed"] = tune.randint(1, 100)
     args["adam_weight_decay"] = 0
+    args["adv_loss_weight"] = tune.loguniform(5e-3, 5e-1)
 
     # discriminator parameters
     args["discriminator_lr"] = tune.loguniform(3e-6, 3e-4)
     args["discriminator_momentum"] = tune.uniform(0.8, 0.95)
+    args["discriminator_step_multiplier"] = tune.randint(1, 4)
 
     tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
 
