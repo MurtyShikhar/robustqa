@@ -18,6 +18,7 @@ from torch.utils.data.sampler import RandomSampler, SequentialSampler
 from args import get_train_test_args
 from DomainAdversarial import DomainDiscriminator
 
+from ray import tune
 from tqdm import tqdm
 
 def prepare_eval_data(dataset_dict, tokenizer):
@@ -207,7 +208,7 @@ class Trainer():
         self.visualize_predictions = args["visualize_predictions"]
         self.discriminator = discriminator
         self.num_domains = 20  # TODO: We should be able set this to a meaningful number based on the data
-        self.adv_loss_weight = .01
+        self.adv_loss_weight = 0.01
         self.nll_weights = None  # This will be initialized later
         if not os.path.exists(self.path):
             os.makedirs(self.path)
@@ -380,12 +381,14 @@ class Trainer():
                         preds, curr_score = self.evaluate(model, eval_dataloader, val_dict, return_preds=True)
                         results_str = ', '.join(f'{k}: {v:05.2f}' for k, v in curr_score.items())
 
+                        if report:
+                            tune.report(EM=curr_score["EM"])
+                            tune.report(F1=curr_score["F1"])
+                            tune.report(QALoss=curr_score["Composite QA loss"])
+                                        
                         self.log.info('Visualizing in TensorBoard...')
                         for k, v in curr_score.items():
                             tbx.add_scalar(f'val/{k}', v, global_idx)
-
-                            if report:
-                                tune.report(f'val/{k}', v)
 
                         self.log.info(f'Eval {results_str}')
                         if self.visualize_predictions:

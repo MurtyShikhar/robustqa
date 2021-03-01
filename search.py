@@ -15,13 +15,13 @@ def main():
     args["tune"] = True
 
     # qa model parameters
-    args["lr"] = tune.loguniform(1e-4, 1e-1)
+    args["lr"] = tune.loguniform(3e-6, 3e-4)
     args["batch_size"] = tune.choice(args["tune_batch_sizes"])
     args["seed"] = tune.randint(1, 100)
-    args["adam_weight_decay"] = tune.loguniform(1e-4, 1e-1)
+    args["adam_weight_decay"] = 0
 
     # discriminator parameters
-    args["discriminator_lr"] = tune.loguniform(1e-4, 1e-1)
+    args["discriminator_lr"] = tune.loguniform(3e-6, 3e-4)
     args["discriminator_momentum"] = tune.uniform(0.8, 0.95)
 
     tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
@@ -37,9 +37,7 @@ def main():
     # trial results automatically get logged by tune
     best_trial = result.get_best_trial("loss", "min", "last")
     print("Best trial config: {0}".format(best_trial.config))
-    print("Best trial final loss: {0}".format(best_trial.last_result["loss"]))
-    print("Best trial final F1: {0}".format(best_trial.last_result["F1"]))
-    print("Best trial final EM: {0}".format(best_trial.last_result["EM"]))
+    print("Best trial final loss: {0}".format(best_trial.last_result))
 
 if __name__ == "__main__":
     main()
