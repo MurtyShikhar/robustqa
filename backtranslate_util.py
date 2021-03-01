@@ -1,7 +1,12 @@
 import util
 import numpy as np
-from nltk import tokenize
+# from nltk import tokenize
+# conda install spacy
+# python -m spacy download en_core_web_sm
+import spacy
 
+# load the module
+nlp = spacy.load('en_core_web_sm')
 
 def sample_dataset(args, datasets, data_dir, sample_prob = 0.2, seed = 94305,
                    sample_queries_dir = 'queries/sample_queries.txt',
@@ -36,7 +41,7 @@ def write_context(context, output_dir = 'queries/sample_context.txt'):
     out_lengths = []
     with open(output_dir, 'w') as f:
         for c in context:
-            out = tokenize.sent_tokenize(c)
+            out = [str(sent) for sent in nlp(c).sents]
             for o in out:
                 f.write(o)
                 f.write('\n')
