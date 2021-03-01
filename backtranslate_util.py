@@ -1,6 +1,6 @@
 import util
 import numpy as np
-# from nltk import tokenize
+from nltk import tokenize
 # conda install spacy
 # python -m spacy download en_core_web_sm
 import spacy
@@ -43,6 +43,7 @@ def write_context(context, output_dir = 'queries/sample_context.txt'):
         for c in context:
             out = [str(sent) for sent in nlp(c).sents]
             for o in out:
+                o = o.replace('\n','')
                 f.write(o)
                 f.write('\n')
             out_lengths.append(len(out))
