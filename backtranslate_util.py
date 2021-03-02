@@ -53,8 +53,8 @@ def write_context(context, gold_answers, output_dir = 'queries/sample_context.tx
                 if out[j] != "":
                     f.write(out[j] + '\n')
                     for k in range(len(curr_answers)):
-                    if curr_answers[k] in out[j]:
-                        curr_locs[k] = j
+                        if curr_answers[k] in out[j]:
+                            curr_locs[k] = j
                 else:
                     length -= 1
                     
