@@ -119,15 +119,12 @@ from transformers import DistilBertTokenizerFast
 #def get_sampling_dataset(args, datasets, data_dir, tokenizer, split_name):
     # for testing purpose can de-function the code and uncomment the line below
 args = get_train_test_args() 
-dataset_dict, sample_idx, sample_context_individual_length = sample_dataset(args, args.train_datasets, 
-                                                                            args.train_dir,
-                                                                            args.sample_prob, args.seed,
-                                                                            args.sample_queries_dir,
-                                                                            args.sample_context_dir)
+dataset_dict, sample_idx, sample_context_individual_length, gold_answers, answer_locs = sample_dataset(args, args.train_datasets, args.train_dir,
+                                                                                                       args.sample_prob, args.seed,
+                                                                                                       args.sample_queries_dir, args.sample_context_dir)
 
 print('Sampled queries are being saved at:', args.sample_queries_dir)         
 print('Sampled context are being saved at:', args.sample_context_dir)
-# gold_answers = [dataset_dict['answer'][i] for i in sample_idx]
 
 [sample_idx, sample_context_individual_length, gold_answers] = drop_empty_trans(args.trans_queries_dir, args.trans_context_dir, sample_context_individual_length,
                                                                              arg.dropped_queries_dir, args.dropped_queries_dir, 
