@@ -69,7 +69,7 @@ def concat_context(context_dir, sample_context_individual_length):
         count += l
     return output_context
   
-def drop_empty_trans(queries_dir, context_dir, sample_context_individual_length,
+def get_empty_trans_index(queries_dir, context_dir, sample_context_individual_length,
                       output_queries_dir, output_context_dir):
     q_file = open(queries_dir, 'r')
     c_file = open(context_dir, 'r')
@@ -103,4 +103,13 @@ def drop_empty_trans(queries_dir, context_dir, sample_context_individual_length,
           output_c_file.write(c)
           
     return drop_index
-        
+  
+def drop_empty_trans(queries_dir, context_dir, sample_context_individual_length,
+                      output_queries_dir, output_context_dir, process_lists):
+    drop_index = drop_empty_trans(queries_dir, context_dir, sample_context_individual_length,
+                                  output_queries_dir, output_context_dir)
+
+    for l in process_lists:
+      l = [elem for idx, elem in enumerate(l) if idx not in drop_index]
+    
+    return *process_lists
