@@ -43,10 +43,16 @@ def write_context(context, output_dir = 'queries/sample_context.txt'):
         for c in context:
             c = c.replace('\n','')
             out = [str(sent) for sent in nlp(c).sents]
+            length = len(out)
             for o in out:
-                f.write(o)
-                f.write('\n')
-            out_lengths.append(len(out))
+                if o[:3] == "\u20":
+                    o = ""
+                if o != "":
+                    f.write(o)
+                    f.write('\n')
+                else:
+                    length -= 1
+            out_lengths.append(length)
     return out_lengths
 
 def concat_queries(queries_dir):
