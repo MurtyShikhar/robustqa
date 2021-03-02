@@ -112,4 +112,4 @@ def drop_empty_trans(queries_dir, context_dir, sample_context_individual_length,
     for l in process_lists:
       l = [elem for idx, elem in enumerate(l) if idx not in drop_index]
     
-    return *process_lists
+    return process_lists
