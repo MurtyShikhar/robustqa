@@ -27,7 +27,7 @@ def sample_dataset(args, datasets, data_dir, sample_prob = 0.1, seed = 94305,
     gold_answers = [dataset_dict['answer'][i] for i in sample_idx]
     
     write_queries(sample_queries, sample_queries_dir)
-    sample_context_individual_length, answer_locs = write_context(sample_context, sample_context_dir, gold_answers)
+    sample_context_individual_length, answer_locs = write_context(sample_context, gold_answers, sample_context_dir)
         
     return dataset_dict, sample_idx, sample_context_individual_length, gold_answers, answer_locs
     
@@ -35,18 +35,16 @@ def sample_dataset(args, datasets, data_dir, sample_prob = 0.1, seed = 94305,
 def write_queries(queries, output_dir = 'queries/sample_queries.txt'):
     with open(output_dir, 'w') as f:
         for q in queries:
-            f.write(q)
-            f.write('\n')
+            f.write(q + '\n')
 
-def write_context(context, output_dir = 'queries/sample_context.txt', gold_answers):
+def write_context(context, gold_answers, output_dir = 'queries/sample_context.txt'):
     out_lengths = []
     answer_locs = []
     with open(output_dir, 'w') as f:
-        for i in range(length(context)):
+        for i in range(len(context)):
             out = [str(sent).strip() for sent in nlp(context[i]).sents if str(sent).strip() != '']
             for j in range(len(out)):
-                f.write(out[j])
-                f.write('\n')
+                f.write(out[j] + '\n')
                 if out[j].contains(gold_answers[i]['text']):
                   answer_locs.append(j)
             out_lengths.append(len(out))
@@ -60,7 +58,8 @@ def concat_queries(queries_dir):
         output_queries.append(q)
     return output_queries
     
-def concat_context(context_dir, sample_context_individual_length):
+def concat_context(context_dir, sample_context_individual_
+                  ):
     output_context = []
     count = 0
     f = open(context_dir, 'r')
