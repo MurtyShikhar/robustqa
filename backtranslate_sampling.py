@@ -119,34 +119,30 @@ from transformers import DistilBertTokenizerFast
 #def get_sampling_dataset(args, datasets, data_dir, tokenizer, split_name):
     # for testing purpose can de-function the code and uncomment the line below
 args = get_train_test_args() 
-# dataset_dict, sample_idx, sample_context_individual_length = sample_dataset(args, args.train_datasets, 
-#                                                                             args.train_dir,
-#                                                                             args.sample_prob, args.seed,
-#                                                                             args.sample_queries_dir,
-#                                                                             args.sample_context_dir)
-dataset_dict, sample_idx = sample_dataset(args, args.train_datasets, 
+dataset_dict, sample_idx, sample_context_individual_length = sample_dataset(args, args.train_datasets, 
                                                                             args.train_dir,
                                                                             args.sample_prob, args.seed,
                                                                             args.sample_queries_dir,
                                                                             args.sample_context_dir)
-# print('Sampled queries are being saved at:', args.sample_queries_dir)         
-# print('Sampled context are being saved at:', args.sample_context_dir)
-# gold_answers = [dataset_dict['answer'][i] for i in sample_idx]
 
-#[sample_idx, sample_context_individual_length, gold_answers] = drop_empty_trans(args.trans_queries_dir, args.trans_context_dir, sample_context_individual_length,
-#                                                                              arg.dropped_queries_dir, args.dropped_queries_dir, 
-#                                                                              list(sample_idx, sample_context_individual_length, gold_answers))
+print('Sampled queries are being saved at:', args.sample_queries_dir)         
+print('Sampled context are being saved at:', args.sample_context_dir)
+gold_answers = [dataset_dict['answer'][i] for i in sample_idx]
 
-# backtranslated_queries = concat_queries(args.backtranslate_queries_dir)
-# backtranslated_context = concat_context(args.backtranslate_context_dir, sample_context_individual_length)
+[sample_idx, sample_context_individual_length, gold_answers] = drop_empty_trans(args.trans_queries_dir, args.trans_context_dir, sample_context_individual_length,
+                                                                             arg.dropped_queries_dir, args.dropped_queries_dir, 
+                                                                             list(sample_idx, sample_context_individual_length, gold_answers))
 
-# new_dataset_dict = dict(dataset_dict)
+backtranslated_queries = concat_queries(args.backtranslate_queries_dir)
+backtranslated_context = concat_context(args.backtranslate_context_dir, sample_context_individual_length)
 
-# for (index, replacement) in zip(sample_idx, backtranslated_queries):
-#     new_dataset_dict['question'][index] = replacement
+new_dataset_dict = dict(dataset_dict)
 
-# for (index, replacement) in zip(sample_idx, backtranslated_context):
-#     new_dataset_dict['context'][index] = replacement
+for (index, replacement) in zip(sample_idx, backtranslated_queries):
+    new_dataset_dict['question'][index] = replacement
+
+for (index, replacement) in zip(sample_idx, backtranslated_context):
+    new_dataset_dict['context'][index] = replacement
 
     # for testing purpose can comment out the two lines below and check new_dataset_dict
     # data_encodings = read_and_process(args, tokenizer, new_dataset_dict, data_dir, dataset_name, split_name)
