@@ -21,7 +21,7 @@ def sample_dataset(args, datasets, data_dir, sample_prob = 0.1, seed = 94305,
         dataset_dict = util.merge(dataset_dict, dataset_dict_curr)
     train_length = len(dataset_dict['id'])
     sample_idx = list(np.random.choice(train_length, size = int(sample_prob * train_length), replace = False))
-    for in in sample_idx[1:5]:
+    for i in sample_idx[1:5]:
       print(dataset_dict['answer'][i]) 
 #     sample_queries = [dataset_dict['question'][i] for i in sample_idx]
 #     sample_context = [dataset_dict['context'][i] for i in sample_idx]
