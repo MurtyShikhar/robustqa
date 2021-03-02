@@ -8,7 +8,7 @@ import spacy
 # load the module
 nlp = spacy.load('en_core_web_sm')
 
-def sample_dataset(args, datasets, data_dir, sample_prob = 0.2, seed = 94305,
+def sample_dataset(args, datasets, data_dir, sample_prob = 0.1, seed = 94305,
                    sample_queries_dir = 'queries/sample_queries.txt',
                    sample_context_dir = 'queries/sample_context.txt'):
     np.random.seed(seed)
