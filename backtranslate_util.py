@@ -45,20 +45,14 @@ def write_context(context, gold_answers, output_dir = 'queries/sample_context.tx
             out = [str(sent).strip() for sent in nlp(context[i].replace('\n', '')).sents if str(sent).strip() != '']
             curr_answers = gold_answers[i]['text']
             curr_locs = [-1] * len(curr_answers)
-            
-            length = len(out)
+
             for j in range(len(out)):
-                if out[j][:4] == "\u20":
-                    out[j] = ""
-                if out[j] != "":
-                    f.write(out[j] + '\n')
-                    for k in range(len(curr_answers)):
-                        if curr_answers[k] in out[j]:
-                            curr_locs[k] = j
-                else:
-                    length -= 1
+              f.write(out[j] + '\n')
+              for k in range(len(curr_answers)):
+                if curr_answers[k] in out[j]:
+                  curr_locs[k] = j
                     
-            out_lengths.append(length)
+            out_lengths.append(len(out))
             answer_locs.append(curr_locs)
     return out_lengths, answer_locs
 
