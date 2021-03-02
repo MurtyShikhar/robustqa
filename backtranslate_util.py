@@ -106,8 +106,8 @@ def get_empty_trans_index(queries_dir, context_dir, sample_context_individual_le
   
 def drop_empty_trans(queries_dir, context_dir, sample_context_individual_length,
                       output_queries_dir, output_context_dir, process_lists):
-    drop_index = drop_empty_trans(queries_dir, context_dir, sample_context_individual_length,
-                                  output_queries_dir, output_context_dir)
+    drop_index = get_empty_trans_index(queries_dir, context_dir, sample_context_individual_length,
+                                       output_queries_dir, output_context_dir)
 
     for l in process_lists:
       l = [elem for idx, elem in enumerate(l) if idx not in drop_index]
