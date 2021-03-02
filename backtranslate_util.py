@@ -44,13 +44,13 @@ def write_context(context, gold_answers, output_dir = 'queries/sample_context.tx
         for i in range(len(context)):
             out = [str(sent).strip() for sent in nlp(context[i].replace('\n', '')).sents if str(sent).strip() != '']
             curr_answers = gold_answers[i]['text']
-            curr_locs = []
+            curr_locs = [-1] * len(curr_answers)
             
             for j in range(len(out)):
                 f.write(out[j] + '\n')
-                for answer in curr_answers:
-                  if answer in out[j]:
-                    curr_locs.append(j)
+                for k in range(len(curr_answers)):
+                  if curr_answers[k] in out[j]:
+                    curr_locs[k] = j
                     
             out_lengths.append(len(out))
             answer_locs.append(curr_locs)
