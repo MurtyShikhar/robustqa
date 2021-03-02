@@ -22,7 +22,7 @@ def get_train_test_args():
     parser.add_argument('--sub-file', type=str, default='')
     parser.add_argument('--visualize-predictions', action='store_true')
     parser.add_argument('--eval-every', type=int, default=5000)
-    parser.add_argument('--sample_prob', type=float, default=0.2)
+    parser.add_argument('--sample_prob', type=float, default=0.1)
     parser.add_argument('--sample_queries_dir', type=str, default='queries/sample_queries.txt')
     parser.add_argument('--sample_context_dir', type=str, default='queries/sample_context.txt')
     parser.add_argument('--backtranslate_queries_dir', type=str, default='queries/sample_queries.txt')
