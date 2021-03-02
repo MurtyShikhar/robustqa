@@ -126,14 +126,11 @@ dataset_dict, sample_idx, sample_context_individual_length = sample_dataset(args
                                                                             args.sample_context_dir)
 print('Sampled queries are being saved at:', args.sample_queries_dir)         
 print('Sampled context are being saved at:', args.sample_context_dir)
-
 gold_answers = [dataset_dict['answer'][i] for i in sample_idx]
-drop_index = drop_empty_trans(args.trans_queries_dir, args.trans_context_dir, sample_context_individual_length,
-                              arg.dropped_queries_dir, args.dropped_queries_dir)
 
-sample_idx = [id for idx, id in enumerate(sample_idx) if idx not in drop_index]
-sample_context_individual_length = [length for idx, length in enumerate(sample_context_individual_length) if idx not in drop_index]
-gold_answers = [answer for idx, answer in enumerate(gold_answers) if idx not in drop_index]
+sample_idx, sample_context_individual_length, gold_answers = drop_empty_trans(args.trans_queries_dir, args.trans_context_dir, sample_context_individual_length,
+                                                                              arg.dropped_queries_dir, args.dropped_queries_dir, 
+                                                                              list(sample_idx, sample_context_individual_length, gold_answers))
 
 backtranslated_queries = concat_queries(args.backtranslate_queries_dir)
 backtranslated_context = concat_context(args.backtranslate_context_dir, sample_context_individual_length)
