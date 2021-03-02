@@ -42,7 +42,7 @@ def write_context(context, gold_answers, output_dir = 'queries/sample_context.tx
     answer_locs = []
     with open(output_dir, 'w') as f:
         for i in range(len(context)):
-            out = [str(sent).strip().encode('ascii', 'ignore') for sent in nlp(context[i].replace('\n', '')).sents if str(sent).strip().encode('ascii', 'ignore') != '']
+            out = [(str(sent).strip().encode('ascii', 'ignore')).decode("utf-8") for sent in nlp(context[i].replace('\n', '')).sents if (str(sent).strip().encode('ascii', 'ignore')).decode("utf-8") != '']
             curr_answers = gold_answers[i]['text']
             curr_locs = [-1] * len(curr_answers)
 
