@@ -42,7 +42,7 @@ def write_context(context, gold_answers, output_dir = 'queries/sample_context.tx
     answer_locs = []
     with open(output_dir, 'w') as f:
         for i in range(len(context)):
-            out = [str(sent).strip() for sent in nlp(context[i].replace('n', '')).sents if str(sent).strip() != '']
+            out = [str(sent).strip() for sent in nlp(context[i].replace('\n', '')).sents if str(sent).strip() != '']
             for j in range(len(out)):
                 f.write(out[j] + '\n')
                 if out[j].contains(gold_answers[i]['text']):
