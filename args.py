@@ -30,10 +30,10 @@ def get_train_test_args():
     parser.add_argument('--subset-keep-percentage', type=float, default=0.01)
 
     # arguments for hyperparameter search
+    parser.add_argument("--tune-name", type=str, default="hyperparam-search")
     parser.add_argument('--num-gpu-per-test', type=int, default=0)
     parser.add_argument('--num-cpu-per-test', type=int, default=1)
     parser.add_argument('--num-tune-samples', type=int, default=10)
-    parser.add_argument('--tune-batch-sizes', type=int, nargs="+", default=[32])
     parser.add_argument('--tune-checkpoint-path', type=str)
 
     parser.add_argument('--tune', action='store_true')
