@@ -58,8 +58,7 @@ def concat_queries(queries_dir):
         output_queries.append(q)
     return output_queries
     
-def concat_context(context_dir, sample_context_individual_
-                  ):
+def concat_context(context_dir, sample_context_individual_length):
     output_context = []
     count = 0
     f = open(context_dir, 'r')
