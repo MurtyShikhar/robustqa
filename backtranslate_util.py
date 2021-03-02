@@ -41,7 +41,7 @@ def write_context(context, output_dir = 'queries/sample_context.txt'):
     out_lengths = []
     with open(output_dir, 'w') as f:
         for c in context:
-            out = [str(sent).strip() for sent in nlp(c).sents if str(sent) != 'n' and not str(sent).strip()]
+            out = [str(sent).strip() for sent in nlp(c).sents if str(sent) != '\n' and not str(sent).strip()]
             for o in out:
                 f.write(o)
                 f.write('\n')
