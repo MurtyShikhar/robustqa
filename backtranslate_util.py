@@ -45,7 +45,7 @@ def write_context(context, gold_answers, output_dir = 'queries/sample_context.tx
             out = [str(sent).strip() for sent in nlp(context[i].replace('\n', '')).sents if str(sent).strip() != '']
             for j in range(len(out)):
                 f.write(out[j] + '\n')
-                if out[j].contains(gold_answers[i]['text']):
+                if gold_answers[i]['text'] in out[j]:
                   answer_locs.append(j)
             out_lengths.append(len(out))
     return out_lengths, answer_locs
