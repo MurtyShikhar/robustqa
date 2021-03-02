@@ -69,7 +69,7 @@ def concat_context(context_dir, sample_context_individual_length):
         count += l
     return output_context
   
-  def drop_empty_trans(queries_dir, context_dir, sample_context_individual_length,
+def drop_empty_trans(queries_dir, context_dir, sample_context_individual_length,
                       output_queries_dir, output_context_dir):
     q_file = open(queries_dir, 'r')
     c_file = open(context_dir, 'r')
@@ -102,5 +102,5 @@ def concat_context(context_dir, sample_context_individual_length):
         for c in context:
           output_c_file.write(c)
           
- return drop_index
+    return drop_index
         
