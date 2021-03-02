@@ -21,14 +21,16 @@ def sample_dataset(args, datasets, data_dir, sample_prob = 0.1, seed = 94305,
         dataset_dict = util.merge(dataset_dict, dataset_dict_curr)
     train_length = len(dataset_dict['id'])
     sample_idx = list(np.random.choice(train_length, size = int(sample_prob * train_length), replace = False))
-    sample_queries = [dataset_dict['question'][i] for i in sample_idx]
-    sample_context = [dataset_dict['context'][i] for i in sample_idx]
+    for in in sample_idx[1:5]:
+      print(dataset_dict['answer'][i]) 
+#     sample_queries = [dataset_dict['question'][i] for i in sample_idx]
+#     sample_context = [dataset_dict['context'][i] for i in sample_idx]
     
     
-    write_queries(sample_queries, sample_queries_dir)
-    sample_context_individual_length = write_context(sample_context, sample_context_dir)
+#     write_queries(sample_queries, sample_queries_dir)
+#     sample_context_individual_length = write_context(sample_context, sample_context_dir)
         
-    return dataset_dict, sample_idx, sample_context_individual_length
+    return dataset_dict, sample_idx#, sample_context_individual_length
     
 
 def write_queries(queries, output_dir = 'queries/sample_queries.txt'):
