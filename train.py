@@ -239,7 +239,8 @@ class Trainer():
         self.visualize_predictions = args["visualize_predictions"]
         self.discriminator = discriminator
         self.num_domains = 20  # TODO: We should be able set this to a meaningful number based on the data
-        self.adv_loss_weight = 0.01
+        self.adv_loss_weight = args["adv_loss_weight"]
+        self.discrim_step_multiplier = args["discriminator_step_multiplier"]
         self.nll_weights = None  # This will be initialized later
         if not os.path.exists(self.path):
             os.makedirs(self.path)
@@ -374,21 +375,22 @@ class Trainer():
                     optim.step()
 
                     if self.discriminator is not None:
-                        # As in the paper, we're going to train the discriminator exactly the same number of times as the model, once after every epoch.
-                        discrim_optimizer.zero_grad()
-                        # as in the paper's github repo, we run the QA model again, with extracting new log_prob scores
-                        outputs = model(input_ids, attention_mask=attention_mask,
-                                        start_positions=start_positions,
-                                        end_positions=end_positions, output_hidden_states=True)
-                        hidden_cls = outputs.hidden_states[6][:, 0, :]  # TODO: verify this is actually the right layer
-                        log_prob = self.discriminator(hidden_cls)
+                        for i in range(self.discrim_step_multiplier):
+                            # As in the paper, we're going to train the discriminator exactly the same number of times as the model, once after every epoch.
+                            discrim_optimizer.zero_grad()
+                            # as in the paper's github repo, we run the QA model again, with extracting new log_prob scores
+                            outputs = model(input_ids, attention_mask=attention_mask,
+                                            start_positions=start_positions,
+                                            end_positions=end_positions, output_hidden_states=True)
+                            hidden_cls = outputs.hidden_states[6][:, 0, :]  # TODO: verify this is actually the right layer
+                            log_prob = self.discriminator(hidden_cls)
 
-                        discrim_loss = self.get_discriminator_loss(log_prob, labels)
+                            discrim_loss = self.get_discriminator_loss(log_prob, labels)
 
-                        # TODO: track some statistic about discriminator accuracy?
+                            # TODO: track some statistic about discriminator accuracy?
 
-                        discrim_loss.backward()
-                        discrim_optimizer.step()
+                            discrim_loss.backward()
+                            discrim_optimizer.step()
 
                     progress_bar.update(len(input_ids))
                     progress_bar.set_postfix(epoch=epoch_num, NLL=loss.item())
