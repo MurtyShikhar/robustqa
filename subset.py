@@ -54,7 +54,6 @@ def create_subsets(directory, datasets, keep_percentage=1):
 if __name__ == "__main__":
     args = args.get_train_test_args()
     datasets = args["train_datasets"].split(',')
-    oodomain_datasets = args["oodomain_train_datasets"].split(',')
 
     create_subsets(args["train_dir"], datasets, args["subset_keep_percentage"])
     create_subsets(args["val_dir"], datasets)
