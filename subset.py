@@ -58,6 +58,3 @@ if __name__ == "__main__":
 
     create_subsets(args["train_dir"], datasets, args["subset_keep_percentage"])
     create_subsets(args["val_dir"], datasets)
-
-    create_subsets(args["oodomain_train_dir"], oodomain_datasets, args["subset_keep_percentage"])
-    create_subsets(args["oodomain_val_dir"], oodomain_datasets)
