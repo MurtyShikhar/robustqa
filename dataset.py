@@ -48,16 +48,17 @@ def get_topic_id(group, topic_id_pair):
         new_id = len(topic_id_pair)
         if topic not in topic_id_pair:
             topic_id_pair[topic] = new_id
-        return topic_id_pair[topic]
+        return topic, topic_id_pair[topic], topic_id_pair
     else:
-        return -1
+        return None, -1, topic_id_pair
 
-def add_question_to_dict(qa, context, topic_id, data_dict):
+def add_question_to_dict(qa, context, topic, topic_id, data_dict):
     question = qa['question']
     if len(qa['answers']) == 0:
         data_dict['question'].append(question)
         data_dict['context'].append(context)
         data_dict['id'].append(qa['id'])
+        data_dict['topic'].append(topic)
         data_dict['topic_id'].append(topic_id)
     else:
         for answer in qa['answers']:
@@ -65,6 +66,7 @@ def add_question_to_dict(qa, context, topic_id, data_dict):
             data_dict['context'].append(context)
             data_dict['id'].append(qa['id'])
             data_dict['answer'].append(answer)
+            data_dict['topic'].append(topic)
             data_dict['topic_id'].append(topic_id)
 
 def collapse_data_dict(data_dict):
@@ -72,13 +74,14 @@ def collapse_data_dict(data_dict):
     for idx, qid in enumerate(data_dict['id']):
         id_map[qid].append(idx)
 
-    data_dict_collapsed = {'question': [], 'context': [], 'id': [], 'topic_id': []}
+    data_dict_collapsed = {'question': [], 'context': [], 'id': [], 'topic': [], 'topic_id': []}
     if data_dict['answer']:
         data_dict_collapsed['answer'] = []
     for qid in id_map:
         ex_ids = id_map[qid]
         data_dict_collapsed['question'].append(data_dict['question'][ex_ids[0]])
         data_dict_collapsed['context'].append(data_dict['context'][ex_ids[0]])
+        data_dict_collapsed['topic'].append(data_dict['topic'][ex_ids[0]])
         data_dict_collapsed['topic_id'].append(data_dict['topic_id'][ex_ids[0]])
         data_dict_collapsed['id'].append(qid)
         if data_dict['answer']:
@@ -97,13 +100,13 @@ def read_squad(path, save_dir):
     with open(path, 'rb') as f:
         squad_dict = json.load(f)
 
-    data_dict = {'question': [], 'context': [], 'id': [], 'answer': [], 'topic_id': []}
+    data_dict = {'question': [], 'context': [], 'id': [], 'answer': [], 'topic': [], 'topic_id': []}
     for group in squad_dict['data']:
-        topic_id = get_topic_id(group, topic_id_pair)
+        topic, topic_id, topic_id_pair = get_topic_id(group, topic_id_pair)
         for passage in group['paragraphs']:
             context = passage['context']
             for qa in passage['qas']:
-                add_question_to_dict(qa, context, topic_id, data_dict)
+                add_question_to_dict(qa, context, topic, topic_id, data_dict)
 
     data_dict_collapsed = collapse_data_dict(data_dict)
     save_topic_id_pair(topic_id_file, topic_id_pair)
