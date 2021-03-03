@@ -16,9 +16,7 @@ def main():
 
     # qa model parameters
     args["lr"] = tune.loguniform(3e-6, 3e-4)
-    args["batch_size"] = tune.choice(args["tune_batch_sizes"])
-    args["seed"] = tune.randint(1, 100)
-    args["adam_weight_decay"] = 0
+    args["adam_weight_decay"] = tune.loguniform(1e-4, 1e-1)
     args["adv_loss_weight"] = tune.loguniform(5e-3, 5e-1)
 
     # discriminator parameters
@@ -31,6 +29,7 @@ def main():
     result = tune.run(
         partial(do_train, tokenizer=tokenizer),
         config=args,
+        name=args["tune_name"],
         local_dir="tune_results",
         num_samples=args["num_tune_samples"],
         resources_per_trial={"cpu": args["num_cpu_per_test"], "gpu": args["num_gpu_per_test"]},
