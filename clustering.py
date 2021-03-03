@@ -50,7 +50,7 @@ for k in K:
     km = km.fit(X_transformed)
     Sum_of_squared_distances.append(km.inertia_)
 
-plt.plot(k, Sum_of_squared_distances, 'bx-')
+plt.plot(K, Sum_of_squared_distances, 'bx-')
 plt.xlabel('k')
 plt.ylabel('Sum_of_squared_distances')
 plt.title('Elbow Method For Optimal k')
