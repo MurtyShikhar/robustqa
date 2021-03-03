@@ -7,6 +7,8 @@ from transformers import DistilBertTokenizerFast
 from args import get_train_test_args
 from train import do_train
 
+from datetime import datetime
+
 def main():
     if not os.path.exists("tune_results"):
         os.makedirs("tune_results")
@@ -26,10 +28,11 @@ def main():
 
     tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
 
+    timestamp = datetime.now().strftime("%m-%d-%Y %I:%M:%S.%f %p")
     result = tune.run(
         partial(do_train, tokenizer=tokenizer),
         config=args,
-        name=args["tune_name"],
+        name=f'{args["tune_name"]}_{timestamp}',
         local_dir="tune_results",
         num_samples=args["num_tune_samples"],
         resources_per_trial={"cpu": args["num_cpu_per_test"], "gpu": args["num_gpu_per_test"]},
