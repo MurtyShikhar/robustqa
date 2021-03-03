@@ -6,4 +6,4 @@ Here is an example using English as source language and German as pivot language
 - Generate Vocabulary: `sh run_en_de.sh vocab`
 - Train NMT model that translates English to German: `sh run_en_de.sh train`
 - Test the NMT model: `sh run_en_de.sh test`
-- Generate the translation: `sh run_en_de.sh translate_queries/translate_context`
+- Generate the translation: `sh run_en_de.sh translate_queries` or `sh run_en_de.sh translate_context`
