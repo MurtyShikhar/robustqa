@@ -21,6 +21,8 @@ from DomainAdversarial import DomainDiscriminator
 from ray import tune
 from tqdm import tqdm
 
+from dataset import QADataset
+
 def prepare_test_data(dataset_dict, tokenizer):
     tokenized_examples = tokenizer(dataset_dict['question'],
                                    dataset_dict['context'],
@@ -439,7 +441,6 @@ class Trainer():
         # In the paper, they also use a running average loss for the QA model.
         return torch.nn.NLLLoss(weight=self.nll_weights)(log_prob, labels)
 
-
 def get_dataset(args, datasets, data_dir, tokenizer, split_name):
     datasets = datasets.split(',')
     dataset_dict = None
@@ -449,7 +450,7 @@ def get_dataset(args, datasets, data_dir, tokenizer, split_name):
         dataset_dict_curr = util.read_squad(f'{data_dir}/{dataset}', args["save_dir"])
         dataset_dict = util.merge(dataset_dict, dataset_dict_curr)
     data_encodings = read_and_process(args, tokenizer, dataset_dict, data_dir, dataset_name, split_name)
-    return util.QADataset(data_encodings, train=(split_name=='train'), evaluation=(split_name=='validation'), test=(split_name=='test')), dataset_dict
+    return QADataset(data_encodings, train=(split_name=='train'), evaluation=(split_name=='validation'), test=(split_name=='test')), dataset_dict
 
 def do_train(args, tokenizer):
     if args["tune"]: 
