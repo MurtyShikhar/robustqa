@@ -211,10 +211,10 @@ def calculate_weights(Dataset):
     else:
         return [], 0
 
-def read_squad(path):
+def read_squad(path, save_dir):
     path = Path(path)
     # a unique <topic:id> mapping per process
-    topic_id_file = "topic_id_pair" + UUID
+    topic_id_file = f'{save_dir}/topic_id_pair_{UUID}'
     if os.path.exists(topic_id_file):
         topic_id_pair = json.loads(open(topic_id_file).read())
     else:
