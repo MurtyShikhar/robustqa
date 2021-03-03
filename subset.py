@@ -19,7 +19,7 @@ def read_data(directory, datasets):
     
     return dataset_dict, topics_list
 
-def create_subsets(directory, datasets):
+def create_subsets(directory, datasets, keep_percentage=1):
     print(f'Creating subsets in {directory}')
     dataset_dict, topics_list = read_data(directory, datasets)
     
@@ -28,7 +28,7 @@ def create_subsets(directory, datasets):
     topics_count = dict(Counter(topics_list))
     for key in topics_count.keys():
         # keep at least 3 per topic
-        topics_count[key] = max(3, int(topics_count[key] * args["subset_keep_percentage"]))
+        topics_count[key] = max(3, int(topics_count[key] * keep_percentage))
     
     for dataset in datasets:
         dataset_subset = []
@@ -49,9 +49,15 @@ def create_subsets(directory, datasets):
         with open(f'{directory}/{dataset}_subset', 'w') as f:
             json.dump(subset_dict, f)
 
+    print()
+
 if __name__ == "__main__":
     args = args.get_train_test_args()
     datasets = args["train_datasets"].split(',')
+    oodomain_datasets = args["oodomain_train_datasets"].split(',')
 
-    create_subsets(args["train_dir"], datasets)
+    create_subsets(args["train_dir"], datasets, args["subset_keep_percentage"])
     create_subsets(args["val_dir"], datasets)
+
+    create_subsets(args["oodomain_train_dir"], oodomain_datasets, args["subset_keep_percentage"])
+    create_subsets(args["oodomain_val_dir"], oodomain_datasets)
