@@ -9,6 +9,8 @@ def get_train_test_args():
     parser.add_argument('--adam-weight-decay', type=float, default=0)
     parser.add_argument('--discriminator-lr', type=float, default=3e-5)
     parser.add_argument('--discriminator-momentum', type=float, default=0.8)
+    parser.add_argument('--adv-loss-weight', type=float, default=0.01)
+    parser.add_argument('--discriminator-step-multiplier', type=int, default=1)
 
     parser.add_argument('--num-visuals', type=int, default=10)
     parser.add_argument('--seed', type=int, default=42)
