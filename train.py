@@ -14,7 +14,7 @@ from transformers import AdamW
 from tensorboardX import SummaryWriter
 
 from torch.utils.data import DataLoader
-from torch.utils.data.sampler import RandomSampler, SequentialSampler
+from torch.utils.data.sampler import RandomSampler, SequentialSampler, WeightedRandomSampler
 from args import get_train_test_args
 from DomainAdversarial import DomainDiscriminator
 
@@ -245,6 +245,7 @@ class Trainer():
         self.adv_loss_weight = args["adv_loss_weight"]
         self.discrim_step_multiplier = args["discriminator_step_multiplier"]
         self.nll_weights = None  # This will be initialized later
+        self.skip_nll_weights = args["weighted_random_sampling"]
         if not os.path.exists(self.path):
             os.makedirs(self.path)
 
@@ -324,7 +325,7 @@ class Trainer():
             return preds, results
         return results
 
-    def train(self, model, train_dataloader, eval_dataloader, val_dict, report=False):
+    def train(self, model, train_dataloader, in_val_dataloader, in_val_dict, oo_val_dataloader, oo_val_dict, report=False):
         device = self.device
         model.to(device)
         if self.discriminator is not None:
@@ -334,11 +335,10 @@ class Trainer():
         best_scores = {'F1': -1.0, 'EM': -1.0}
         tbx = SummaryWriter(self.save_dir)
 
-        if self.nll_weights is None:
+        if self.nll_weights is None and not self.skip_nll_weights:
             self.init_nll_weights(train_dataloader)
 
         if self.discriminator is not None:
-            # TODO: use different learning rate for the discriminator?
             # TODO: does weight decay for the discriminator really make sense?
             discrim_optimizer = torch.optim.SGD(self.discriminator.parameters(), lr=self.discriminator_lr, momentum=self.discriminator_momentum)
 
@@ -346,11 +346,6 @@ class Trainer():
             self.log.info(f'Epoch: {epoch_num}')
             with torch.enable_grad(), tqdm(total=len(train_dataloader.dataset)) as progress_bar:
                 for batch in train_dataloader:
-
-                    # TODO: are we going to get weird effects training the discriminator AND the QA model on the same batch?
-                    # TODO: how do we coordinate the training of the discriminator?
-                    # in the paper, they use a running average loss, but I'm using AdamW here.
-
                     optim.zero_grad()
                     model.train()
 
@@ -363,7 +358,7 @@ class Trainer():
                                     start_positions=start_positions,
                                     end_positions=end_positions, output_hidden_states=True)
                     if self.discriminator is not None:
-                        hidden_cls = outputs.hidden_states[6][:, 0, :].to(device)   # TODO: verify this is actually the right layer
+                        hidden_cls = outputs.hidden_states[6][:, 0, :].to(device)
 
                         labels = batch['topic_id'].to(device)
                         labels = torch.remainder(labels, self.num_domains)  # TODO: This is a really crude clustering method, improve?
@@ -385,15 +380,16 @@ class Trainer():
                             outputs = model(input_ids, attention_mask=attention_mask,
                                             start_positions=start_positions,
                                             end_positions=end_positions, output_hidden_states=True)
-                            hidden_cls = outputs.hidden_states[6][:, 0, :]  # TODO: verify this is actually the right layer
+                            hidden_cls = outputs.hidden_states[6][:, 0, :]
                             log_prob = self.discriminator(hidden_cls)
 
                             discrim_loss = self.get_discriminator_loss(log_prob, labels)
-
-                            # TODO: track some statistic about discriminator accuracy?
-
                             discrim_loss.backward()
                             discrim_optimizer.step()
+
+                        discrim_guess = torch.argmax(log_prob, dim=1)
+                        correct_guesses = torch.sum(discrim_guess == labels)
+                        discrim_acc = correct_guesses.item() / discrim_guess.shape[0] * 100
 
                     progress_bar.update(len(input_ids))
                     progress_bar.set_postfix(epoch=epoch_num, NLL=loss.item())
@@ -406,43 +402,56 @@ class Trainer():
                         # This loss should hypothetically start high, get worse, and then get lower.
                         tbx.add_scalar('train/discrim_kl_div', adv_loss.item(), global_idx)
 
+                        # Discriminator accuracy as a percentage
+                        tbx.add_scalar('train/discrim_acc', discrim_acc, global_idx)
+
                     if report: # report performance back to tune
                         tune.report(loss=loss.item())
                         tune.report(discriminator_loss=discrim_loss.item())
                         tune.report(discriminator_kl_div=adv_loss.item())
+                        tune.report(discriminator_accuracy=discrim_acc)
 
                     if (global_idx % self.eval_every) == 0:
                         # TODO: add discriminator information?
                         self.log.info(f'Evaluating at step {global_idx}...')
-                        preds, curr_score = self.evaluate(model, eval_dataloader, val_dict, return_preds=True)
-                        results_str = ', '.join(f'{k}: {v:05.2f}' for k, v in curr_score.items())
-
-                        if report:
-                            tune.report(EM=curr_score["EM"])
-                            tune.report(F1=curr_score["F1"])
-                            tune.report(QALoss=curr_score["Composite QA loss"])
-                                        
-                        self.log.info('Visualizing in TensorBoard...')
-                        for k, v in curr_score.items():
-                            tbx.add_scalar(f'val/{k}', v, global_idx)
-
-                        self.log.info(f'Eval {results_str}')
-                        if self.visualize_predictions:
-                            util.visualize(tbx,
-                                           pred_dict=preds,
-                                           gold_dict=val_dict,
-                                           step=global_idx,
-                                           split='val',
-                                           num_visuals=self.num_visuals)
-                        if curr_score['F1'] >= best_scores['F1']:
-                            best_scores = curr_score
-                            self.save(model)
+                        best_scores = self.report_val_metrics(model, tbx, report, global_idx, best_scores, in_val_dataloader, in_val_dict, "indomain_val")
+                        best_scores = self.report_val_metrics(model, tbx, report, global_idx, best_scores,
+                                                              oo_val_dataloader, oo_val_dict, "oodomain_val")
                     global_idx += 1
+        return best_scores
+
+    def report_val_metrics(self, model, tbx, report, global_idx, best_scores, eval_dataloader, val_dict, val_set_name: str):
+        preds, curr_score = self.evaluate(model, eval_dataloader, val_dict, return_preds=True)
+        results_str = ', '.join(f'{k}: {v:05.2f}' for k, v in curr_score.items())
+
+        if report:
+            tune.report(EM=curr_score[val_set_name + ": EM"])
+            tune.report(F1=curr_score[val_set_name + ": F1"])
+            tune.report(QALoss=curr_score[val_set_name + ": Composite QA loss"])
+
+        self.log.info("Visualizing " + val_set_name + " metrics in TensorBoard...")
+        for k, v in curr_score.items():
+            tbx.add_scalar(f'val/{k}', v, global_idx)
+
+        self.log.info(f'Eval {results_str}')
+        if self.visualize_predictions:
+            util.visualize(tbx,
+                           pred_dict=preds,
+                           gold_dict=val_dict,
+                           step=global_idx,
+                           split='val',
+                           num_visuals=self.num_visuals)
+        if val_set_name == 'oodomain_val' and curr_score['F1'] >= best_scores['F1']:
+            best_scores = curr_score
+            self.save(model)
         return best_scores
 
     def get_discriminator_loss(self, log_prob, labels):
         # In the paper, they also use a running average loss for the QA model.
-        return torch.nn.NLLLoss(weight=self.nll_weights)(log_prob, labels)
+        if self.nll_weights is not None:
+            return torch.nn.NLLLoss(weight=self.nll_weights)(log_prob, labels)
+        else:
+            return torch.nn.NLLLoss()(log_prob, labels)
 
 def get_datasets(log, datasets, data_dir, save_dir):
     if datasets is None:
@@ -495,20 +504,43 @@ def do_train(args, tokenizer):
 
     discriminator = DomainDiscriminator(20, 768)  # TODO: replace these 'magic numbers' with better param values
     trainer = Trainer(args, log, discriminator)
-    train_dataset, _ = get_dataset(log, args, args["train_datasets"], args["train_dir"], tokenizer, 'train'
-        , args["oodomain_train_datasets"], args["oodomain_train_dir"])
+
+    if args['train_with_oodomain']:
+        train_dataset, _ = get_dataset(log, args, args["train_datasets"], args["train_dir"], tokenizer, 'train'
+                                       , args["oodomain_train_datasets"], args["oodomain_train_dir"])
+    else:
+        train_dataset, _ = get_dataset(log, args, args["train_datasets"], args["train_dir"], tokenizer, 'train')
 
     log.info("Preparing Validation Data...")
-    val_dataset, val_dict = get_dataset(log, args, args["train_datasets"], args["val_dir"], tokenizer, 'val'
-        , args["oodomain_train_datasets"], args["oodomain_val_dir"])
+    in_val_dataset, in_val_dict = get_dataset(log, args, args["train_datasets"], args["val_dir"], tokenizer, 'val')
+    oo_val_dataset, oo_val_dict = get_dataset(log, args, args["oodomain_train_datasets"], args["oodomain_val_dir"], tokenizer, 'val')
+
+    if args['weighted_random_sampling']:
+        sampler_weights = torch.zeros((len(train_dataset),))
+        inverse_weights = train_dataset.topic_weights()
+
+        for i in range(len(train_dataset)):
+            # identify topic id
+            topic_id = train_dataset[i]['topic_id'].item()
+            # identify relative weight of that topic
+            cur_weight = inverse_weights[topic_id]
+            # set sampler_weights[i] to that
+            sampler_weights[i] = cur_weight
+
+        sampler = WeightedRandomSampler(weights=sampler_weights, num_samples=len(train_dataset))
+    else:
+        sampler = RandomSampler(train_dataset)
 
     train_loader = DataLoader(train_dataset,
                             batch_size=args["batch_size"],
-                            sampler=RandomSampler(train_dataset))
-    val_loader = DataLoader(val_dataset,
+                            sampler=sampler)
+    in_val_loader = DataLoader(in_val_dataset,
                             batch_size=args["batch_size"],
-                            sampler=SequentialSampler(val_dataset))
-    best_scores = trainer.train(model, train_loader, val_loader, val_dict, report=args["tune"])
+                            sampler=SequentialSampler(in_val_dataset))
+    oo_val_loader = DataLoader(oo_val_dataset,
+                           batch_size=args["batch_size"],
+                           sampler=SequentialSampler(oo_val_dataset))
+    best_scores = trainer.train(model, train_loader, in_val_loader, in_val_dict, oo_val_loader, oo_val_dict, report=args["tune"])
 
 def do_eval(args, tokenizer):
     args["device"] = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
