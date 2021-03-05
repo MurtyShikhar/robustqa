@@ -127,7 +127,7 @@ print('Sampled queries are being saved at:', args.sample_queries_dir)
 print('Sampled context are being saved at:', args.sample_context_dir)
 
 [sample_idx, sample_context_individual_length, gold_answers, answer_locs] = drop_empty_trans(args.trans_queries_dir, args.trans_context_dir, sample_context_individual_length,
-                                                                             arg.dropped_queries_dir, args.dropped_context_dir, 
+                                                                             args.dropped_queries_dir, args.dropped_context_dir, 
                                                                              list(sample_idx, sample_context_individual_length, gold_answers, answer_locs))
 
 backtranslated_queries = concat_queries(args.backtranslate_queries_dir)
