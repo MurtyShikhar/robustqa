@@ -23,12 +23,17 @@ def get_train_test_args():
     parser.add_argument('--visualize-predictions', action='store_true')
     parser.add_argument('--eval-every', type=int, default=5000)
     parser.add_argument('--sample_prob', type=float, default=0.1)
+    
     # where to save the sampling (with sampling prob) queries and context
     parser.add_argument('--sample_queries_dir', type=str, default='queries/sample_queries.txt')
     parser.add_argument('--sample_context_dir', type=str, default='queries/sample_context.txt')
+    
     # where to retrieve the translated queries and context
     parser.add_argument('--trans_queries_dir', type=str, default='queries/trans_en_es_queries.txt')
-    parser.add_argument('--trans_context_dir', type=str, default='queries/trans_en_es_context.txt')
+    # for testing process use sample_context.txt for now
+    #parser.add_argument('--trans_context_dir', type=str, default='queries/trans_en_es_context.txt')
+    parser.add_argument('--trans_context_dir', type=str, default='queries/sample_context.txt')
+    
     # where to store the blank line dropped translated queries and context
     parser.add_argument('--dropped_queries_dir', type=str, default='queries/trans_en_es_queries_dropped.txt')
     parser.add_argument('--dropped_context_dir', type=str, default='queries/trans_en_es_context_dropped.txt')
