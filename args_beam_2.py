@@ -25,20 +25,20 @@ def get_train_test_args():
     parser.add_argument('--sample_prob', type=float, default=0.1)
     
     # where to save the sampling (with sampling prob) queries and context
-    parser.add_argument('--sample_queries_dir', type=str, default='queries/sample_queries.txt')
-    parser.add_argument('--sample_context_dir', type=str, default='queries/sample_context.txt')
+    parser.add_argument('--sample_queries_dir', type=str, default='queries/beam_2/sample_queries.txt')
+    parser.add_argument('--sample_context_dir', type=str, default='queries/beam_2/sample_context.txt')
     
     # where to retrieve the translated queries and context
-    parser.add_argument('--trans_queries_dir', type=str, default='queries/trans_en_es_queries_beam_1.txt')
+    parser.add_argument('--trans_queries_dir', type=str, default='queries/beam_2/trans_en_es_queries_beam_2.txt')
     # for testing process use sample_context.txt for now
     #parser.add_argument('--trans_context_dir', type=str, default='queries/trans_en_es_context.txt')
-    parser.add_argument('--trans_context_dir', type=str, default='queries/sample_context.txt')
+    parser.add_argument('--trans_context_dir', type=str, default='queries/beam_2/sample_context.txt')
     
     # where to store the blank line dropped translated queries and context
-    parser.add_argument('--dropped_queries_dir', type=str, default='queries/trans_en_es_queries_beam_1_dropped.txt')
-    parser.add_argument('--dropped_context_dir', type=str, default='queries/trans_en_es_context_dropped.txt')
+    parser.add_argument('--dropped_queries_dir', type=str, default='queries/beam_2/trans_en_es_queries_beam_2_dropped.txt')
+    parser.add_argument('--dropped_context_dir', type=str, default='queries/beam_2/trans_en_es_context_dropped.txt')
     
-    parser.add_argument('--backtranslate_queries_dir', type=str, default='queries/backtranslate_queries.txt')
-    parser.add_argument('--backtranslate_context_dir', type=str, default='queries/backtranslate_context.txt')
+    parser.add_argument('--backtranslate_queries_dir', type=str, default='queries/beam_2/backtranslate_queries.txt')
+    parser.add_argument('--backtranslate_context_dir', type=str, default='queries/beam_2/backtranslate_context.txt')
     args = parser.parse_args()
     return args
