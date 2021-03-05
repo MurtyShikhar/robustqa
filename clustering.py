@@ -5,6 +5,7 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
+from sklearn.preprocessing import normalize
 import matplotlib.pyplot as plt
 import args
 import util
@@ -41,13 +42,14 @@ tfidfconvert = TfidfVectorizer(analyzer=text_process).fit(X_train)
 
 X_transformed=tfidfconvert.transform(X_train)
 X_transformed_array = X_transformed.toarray()
+normalized_X_transformed = normalize(X_transformed_array, axis=1)
 # Clustering the training sentences with K-means technique
 
 K = range(1,100)
 Sum_of_squared_distances = []
 for k in K:
     km = KMeans(n_clusters=k)
-    km = km.fit(X_transformed_array)
+    km = km.fit(normalized_X_transformed)
     Sum_of_squared_distances.append(km.inertia_)
 
 plt.plot(K, Sum_of_squared_distances, 'bx-')
