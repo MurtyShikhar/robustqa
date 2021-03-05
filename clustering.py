@@ -40,14 +40,14 @@ X_train = data['context']
 tfidfconvert = TfidfVectorizer(analyzer=text_process).fit(X_train)
 
 X_transformed=tfidfconvert.transform(X_train)
-
+X_transformed_array = X_transformed.toarray()
 # Clustering the training sentences with K-means technique
 
 K = range(1,100)
 Sum_of_squared_distances = []
 for k in K:
     km = KMeans(n_clusters=k)
-    km = km.fit(X_transformed)
+    km = km.fit(X_transformed_array)
     Sum_of_squared_distances.append(km.inertia_)
 
 plt.plot(K, Sum_of_squared_distances, 'bx-')
