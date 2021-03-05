@@ -1,4 +1,4 @@
-from args import get_train_test_args
+from args_beam_5 import get_train_test_args
 import argparse
 from backtranslate_util import sample_dataset, concat_context, concat_queries, get_empty_trans_index, drop_empty_trans
 import util
