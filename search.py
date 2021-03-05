@@ -1,13 +1,23 @@
 import os
 from ray import tune
+from ray.tune.schedulers import ASHAScheduler
 from functools import partial
+from datetime import datetime
 
 from transformers import DistilBertTokenizerFast
 
 from args import get_train_test_args
 from train import do_train
 
-from datetime import datetime
+def plot_results(dataframe, params, colors):
+    x = list(dataframe.index)
+    f1 = dataframe["F1"]
+    trial_id = dataframe["trial_id"][0]
+
+    plt.plot(x, f1, label=trial_id, color=colors[0])
+    plt.title("F1 Scores")
+    plt.ylabel("F1")
+    plt.legend(loc="upper right") 
 
 def main():
     if not os.path.exists("tune_results"):
@@ -28,7 +38,15 @@ def main():
 
     tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
 
-    timestamp = datetime.now().strftime("%m-%d-%Y %I:%M:%S.%f %p")
+    scheduler = ASHAScheduler(
+        metric="F1",
+        mode="max",
+        max_t=100, # number of eval_every batches
+        grace_period=10,
+        reduction_factor=2
+    )
+
+    timestamp = datetime.now().strftime("%m_%d_%Y_%I_%M_%S_%p")
     result = tune.run(
         partial(do_train, tokenizer=tokenizer),
         config=args,
@@ -36,12 +54,20 @@ def main():
         local_dir="tune_results",
         num_samples=args["num_tune_samples"],
         resources_per_trial={"cpu": args["num_cpu_per_test"], "gpu": args["num_gpu_per_test"]},
+        scheduler=scheduler
     )
     
-    # trial results automatically get logged by tune
-    best_trial = result.get_best_trial("loss", "min", "last")
-    print("Best trial config: {0}".format(best_trial.config))
-    print("Best trial final loss: {0}".format(best_trial.last_result))
+    trials = list(results.trial_dataframes.keys())
+    results_dict = dict()
+    for trial in trials:
+        params = json.loads(open(f'{trial}/params.json').read())
+        results = pandas.read_json(f'{trial}/result.json', orient='records', lines=True)
+        results_dict[trial] = (params, results)
+
+    plt.figure(figsize=(15, 12))
+    for trial in results_dict:
+        plot_results(results_dict[trial][2], results_dict[trial][0])
+    plt.savefig(f'tune_results/{args["tune_name"]}_{timestamp}/search_f1_scores.png')
 
 if __name__ == "__main__":
     main()

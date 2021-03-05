@@ -417,7 +417,7 @@ class Trainer():
                                 , F1=curr_score["F1"]
                                 , QALoss=curr_score["Composite QA loss"]
                                 , loss=loss.item()
-                                , discriminator_loss=discrim_loss.item() if self.disriminator is not None else 0
+                                , discriminator_loss=discrim_loss.item() if self.discriminator is not None else 0
                                 , discriminator_kl_div=adv_loss.item() if self.discriminator is not None else 0)
                                         
                         self.log.info('Visualizing in TensorBoard...')
