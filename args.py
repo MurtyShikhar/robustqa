@@ -33,6 +33,8 @@ def get_train_test_args():
     parser.add_argument('--visualize-predictions', action='store_true')
     parser.add_argument('--eval-every', type=int, default=5000)
     parser.add_argument('--subset-keep-percentage', type=float, default=0.01)
+    parser.add_argument('--weighted-random-sampling', type=bool, default=False)
+    parser.add_argument('--train-with-oodomain', type=bool, default=True)
 
     # arguments for hyperparameter search
     parser.add_argument("--tune-name", type=str, default="hyperparam-search")
