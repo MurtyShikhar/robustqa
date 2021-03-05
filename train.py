@@ -405,11 +405,6 @@ class Trainer():
                         # This loss should hypothetically start high, get worse, and then get lower.
                         tbx.add_scalar('train/discrim_kl_div', adv_loss.item(), global_idx)
 
-                    if report: # report performance back to tune
-                        tune.report(loss=loss.item())
-                        tune.report(discriminator_loss=discrim_loss.item())
-                        tune.report(discriminator_kl_div=adv_loss.item())
-
                     if (global_idx % self.eval_every) == 0:
                         # TODO: add discriminator information?
                         self.log.info(f'Evaluating at step {global_idx}...')
@@ -417,9 +412,12 @@ class Trainer():
                         results_str = ', '.join(f'{k}: {v:05.2f}' for k, v in curr_score.items())
 
                         if report:
-                            tune.report(EM=curr_score["EM"])
-                            tune.report(F1=curr_score["F1"])
-                            tune.report(QALoss=curr_score["Composite QA loss"])
+                            tune.report(EM=curr_score["EM"]
+                                , F1=curr_score["F1"]
+                                , QALoss=curr_score["Composite QA loss"]
+                                , loss=loss.item()
+                                , discriminator_loss=discrim_loss.item() if self.disriminator is not None else 0
+                                , discriminator_kl_div=adv_loss.item() if self.discriminator is not None else 0)
                                         
                         self.log.info('Visualizing in TensorBoard...')
                         for k, v in curr_score.items():
