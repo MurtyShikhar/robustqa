@@ -29,13 +29,13 @@ def get_train_test_args():
     parser.add_argument('--sample_context_dir', type=str, default='queries/sample_context.txt')
     
     # where to retrieve the translated queries and context
-    parser.add_argument('--trans_queries_dir', type=str, default='queries/trans_en_es_queries.txt')
+    parser.add_argument('--trans_queries_dir', type=str, default='queries/trans_en_es_queries_beam_1.txt')
     # for testing process use sample_context.txt for now
     #parser.add_argument('--trans_context_dir', type=str, default='queries/trans_en_es_context.txt')
     parser.add_argument('--trans_context_dir', type=str, default='queries/sample_context.txt')
     
     # where to store the blank line dropped translated queries and context
-    parser.add_argument('--dropped_queries_dir', type=str, default='queries/trans_en_es_queries_dropped.txt')
+    parser.add_argument('--dropped_queries_dir', type=str, default='queries/trans_en_es_queries_beam_1_dropped.txt')
     parser.add_argument('--dropped_context_dir', type=str, default='queries/trans_en_es_context_dropped.txt')
     
     parser.add_argument('--backtranslate_queries_dir', type=str, default='queries/backtranslate_queries.txt')
