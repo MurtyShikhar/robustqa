@@ -101,7 +101,7 @@ def get_empty_trans_index(queries_dir, context_dir, sample_context_individual_le
             drop = True
             break
           else:
-            context.append[c]
+            context.append(c)
       
       if drop:
         drop_index.append(i)
