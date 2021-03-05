@@ -22,6 +22,7 @@ from ray import tune
 from tqdm import tqdm
 
 from dataset import QADataset
+import dataset as ds
 
 def prepare_test_data(dataset_dict, tokenizer):
     tokenized_examples = tokenizer(dataset_dict['question'],
@@ -441,16 +442,31 @@ class Trainer():
         # In the paper, they also use a running average loss for the QA model.
         return torch.nn.NLLLoss(weight=self.nll_weights)(log_prob, labels)
 
-def get_dataset(args, datasets, data_dir, tokenizer, split_name):
+def get_datasets(log, datasets, data_dir, save_dir):
+    if datasets is None:
+        return None, None
+
     datasets = datasets.split(',')
+    dataset_name = ''
     dataset_dict = None
-    dataset_name=''
     for dataset in datasets:
+        log.info(f'Preparing {dataset} Data...')
         dataset_name += f'_{dataset}'
-        dataset_dict_curr = util.read_squad(f'{data_dir}/{dataset}', args["save_dir"])
-        dataset_dict = util.merge(dataset_dict, dataset_dict_curr)
+        dataset_dict_curr = ds.read_squad(f'{data_dir}/{dataset}', save_dir)
+        dataset_dict = ds.merge(dataset_dict, dataset_dict_curr)
+    
+    return dataset_name, dataset_dict
+
+def get_dataset(log, args, datasets, data_dir, tokenizer, split_name, oodomain_datasets=None, oodomain_dir=None):
+    dataset_name, dataset_dict = get_datasets(log, datasets, data_dir, args["save_dir"])
+    oodomain_dataset_name, oodomain_dataset_dict = get_datasets(log, oodomain_datasets, oodomain_dir, args["save_dir"])
+    if oodomain_dataset_dict is not None:
+        dataset_name += f'_{oodomain_dataset_name}'
+        dataset_dict = ds.merge(dataset_dict, oodomain_dataset_dict)
+
     data_encodings = read_and_process(args, tokenizer, dataset_dict, data_dir, dataset_name, split_name)
-    return QADataset(data_encodings, train=(split_name=='train'), evaluation=(split_name=='validation'), test=(split_name=='test')), dataset_dict
+    return QADataset(data_encodings, train=(split_name=='train'), 
+        evaluation=('val' in split_name), test=(split_name=='test')), dataset_dict
 
 def do_train(args, tokenizer):
     if args["tune"]: 
@@ -477,10 +493,12 @@ def do_train(args, tokenizer):
 
     discriminator = DomainDiscriminator(20, 768)  # TODO: replace these 'magic numbers' with better param values
     trainer = Trainer(args, log, discriminator)
-    train_dataset, _ = get_dataset(args, args["train_datasets"], args["train_dir"], tokenizer, 'train')
+    train_dataset, _ = get_dataset(log, args, args["train_datasets"], args["train_dir"], tokenizer, 'train'
+        , args["oodomain_train_datasets"], args["oodomain_train_dir"])
 
     log.info("Preparing Validation Data...")
-    val_dataset, val_dict = get_dataset(args, args["train_datasets"], args["val_dir"], tokenizer, 'val')
+    val_dataset, val_dict = get_dataset(log, args, args["train_datasets"], args["val_dir"], tokenizer, 'val'
+        , args["oodomain_train_datasets"], args["oodomain_val_dir"])
 
     train_loader = DataLoader(train_dataset,
                             batch_size=args["batch_size"],
