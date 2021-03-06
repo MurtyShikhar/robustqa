@@ -33,14 +33,16 @@ def get_train_test_args():
     parser.add_argument('--visualize-predictions', action='store_true')
     parser.add_argument('--eval-every', type=int, default=5000)
     parser.add_argument('--subset-keep-percentage', type=float, default=0.01)
-    parser.add_argument('--weighted-random-sampling', type=bool, default=False)
-    parser.add_argument('--train-with-oodomain', type=bool, default=True)
+    parser.add_argument('--weighted-random-sampling', action='store_true') # store_true defaults to false
+    parser.add_argument('--train-wo-oodomain', action='store_false') # store_false defaults to true
 
     # arguments for hyperparameter search
     parser.add_argument("--tune-name", type=str, default="hyperparam-search")
     parser.add_argument('--num-gpu-per-test', type=int, default=0)
     parser.add_argument('--num-cpu-per-test', type=int, default=1)
     parser.add_argument('--num-tune-samples', type=int, default=10)
+    parser.add_argument('--min-num-batches', type=int, default=100)
+    parser.add_argument('--max-num-batches', type=int, default=2000)
     parser.add_argument('--tune-checkpoint-path', type=str)
 
     parser.add_argument('--tune', action='store_true')
