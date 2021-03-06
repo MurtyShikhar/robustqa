@@ -3,6 +3,7 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
+from sklearn.decomposition import TruncatedSVD
 import matplotlib.pyplot as plt
 import args as args_dependency
 import dataset
@@ -16,10 +17,10 @@ from features.AvgSentenceLen import AvgSentenceLen
 
 # If we come up with feature extractors we should add them to this list
 CUSTOM_FEATURE_EXTRACTORS: List[FeatureFunction] = [AvgSentenceLen()]
+SVD_COMPONENTS = 1000  # Increase this for a more accurate dim-reduction, decrease it for a smaller one.
 
 
 def extract_custom_features(contexts: List[str]):
-    # TODO: if this gets too slow, we can cache this in a file
     custom_features = np.zeros((len(contexts), len(CUSTOM_FEATURE_EXTRACTORS)))
     for i in range(len(contexts)):
         for j in range(len(CUSTOM_FEATURE_EXTRACTORS)):
@@ -55,7 +56,6 @@ def main():
     nltk.download('wordnet')
 
     # read data
-    # TODO: FIX BEFORE COMMIT
     data = dataset.read_squad("datasets_augmented/indomain_train/squad_subset", args['save_dir'])
     X_train = data['context']
 
@@ -66,10 +66,11 @@ def main():
     tfidfconvert = TfidfVectorizer(analyzer=text_process).fit(X_train)
 
     X_transformed=tfidfconvert.transform(X_train)
-    X_transformed_array = X_transformed.toarray()
+    svd = TruncatedSVD(n_components=SVD_COMPONENTS, random_state=args["seed"])
+    X_reduced = svd.fit_transform(X_transformed)
 
     # append the custom features for the full feature set
-    raw_k_means_features = np.concatenate((X_transformed_array, custom_features), axis=1)
+    raw_k_means_features = np.concatenate((X_reduced, custom_features), axis=1)
 
     # normalize each column to have 0 mean and unit variance
     k_means_features = normalize_matrix_so_cols_have_zero_mean_unit_variance(raw_k_means_features)
