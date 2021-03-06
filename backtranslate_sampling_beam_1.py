@@ -138,6 +138,12 @@ print('Num of non-empty examples after translation:', len(sample_idx))
                                                                              [sample_idx, sample_context_individual_length, gold_answers, answer_locs])
 print('Num of non-empty examples after back translation:', len(sample_idx))
 
+queries_bleu = compute_backtrans_bleu(args.sample_queries_dir, args.back_dropped_queries_dir)
+print('Queries back translation BLEU: {}'.format(queries_bleu))
+
+context_bleu = compute_backtrans_bleu(args.sample_context_dir, args.back_dropped_context_dir)
+print('Context back translation BLEU: {}'.format(context_bleu))
+
 backtranslated_queries = concat_queries(args.backtranslate_queries_dir)
 backtranslated_context = concat_context(args.backtranslate_context_dir, sample_context_individual_length)
 
