@@ -410,25 +410,30 @@ class Trainer():
                     if (global_idx % self.eval_every) == 0:
                         # TODO: add discriminator information?
                         self.log.info(f'Evaluating at step {global_idx}...')
-                        best_scores = self.report_val_metrics(model, tbx, report, global_idx, best_scores, in_val_dataloader, in_val_dict, "indomain_val")
-                        best_scores = self.report_val_metrics(model, tbx, report, global_idx, best_scores,
+                        curr_indomain_scores, best_scores = self.report_val_metrics(model, tbx, report, global_idx, best_scores, in_val_dataloader, in_val_dict, "indomain_val")
+                        curr_oodomain_scores, best_scores = self.report_val_metrics(model, tbx, report, global_idx, best_scores,
                                                               oo_val_dataloader, oo_val_dict, "oodomain_val")
+
+                        if report: # report performance to tune every eval_every batch
+                            tune.report(loss=loss.item()
+                                , discriminator_loss=discrim_loss.item()
+                                , discriminator_kl_div=adv_loss.item()
+                                , discriminator_accuracy=discrim_acc
+                                , indomain_EM=curr_indomain_scores["EM"]
+                                , oodomain_EM=curr_oodomain_scores["EM"]
+                                , indomain_F1=curr_indomain_scores["F1"]
+                                , oodomain_F1=curr_oodomain_scores["F1"]
+                                , indomain_QALoss=curr_indomain_scores["Composite QA loss"]
+                                , oodomain_QALoss=curr_oodomain_scores["Composite QA loss"]
+                                , indomain_KLDiv=curr_indomain_scores["Avg KL Divergence"]
+                                , oodomain_KLDiv=curr_oodomain_scores["Avg KL Divergence"])
+
                     global_idx += 1
         return best_scores
 
     def report_val_metrics(self, model, tbx, report, global_idx, best_scores, eval_dataloader, val_dict, val_set_name: str):
         preds, curr_score = self.evaluate(model, eval_dataloader, val_dict, return_preds=True)
         results_str = ', '.join(f'{k}: {v:05.2f}' for k, v in curr_score.items())
-
-        if report:
-            tune.report(loss=loss.item()
-                , discriminator_loss=discrim_loss.item()
-                , discriminator_kl_div=adv_loss.item()
-                , discriminator_accuracy=discrim_acc
-                , EM=curr_score["EM"]
-                , F1=curr_score["F1"]
-                , QALoss=curr_score["Composite QA loss"]
-                , KLDiv=curr_score["Avg KL Divergence"])
 
         self.log.info("Visualizing " + val_set_name + " metrics in TensorBoard...")
         for k, v in curr_score.items():
@@ -448,7 +453,7 @@ class Trainer():
         if val_set_name == 'oodomain_val' and curr_score['F1'] >= best_scores['F1']:
             best_scores = curr_score
             self.save(model)
-        return best_scores
+        return curr_score, best_scores
 
     def get_discriminator_loss(self, log_prob, labels):
         # In the paper, they also use a running average loss for the QA model.
@@ -509,7 +514,7 @@ def do_train(args, tokenizer):
     discriminator = DomainDiscriminator(20, 768)  # TODO: replace these 'magic numbers' with better param values
     trainer = Trainer(args, log, discriminator)
 
-    if args['train_with_oodomain']:
+    if not args['train_wo_oodomain']:
         train_dataset, _ = get_dataset(log, args, args["train_datasets"], args["train_dir"], tokenizer, 'train'
                                        , args["oodomain_train_datasets"], args["oodomain_train_dir"])
     else:

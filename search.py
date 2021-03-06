@@ -9,16 +9,6 @@ from transformers import DistilBertTokenizerFast
 from args import get_train_test_args
 from train import do_train
 
-def plot_results(dataframe, params, colors):
-    x = list(dataframe.index)
-    f1 = dataframe["F1"]
-    trial_id = dataframe["trial_id"][0]
-
-    plt.plot(x, f1, label=trial_id, color=colors[0])
-    plt.title("F1 Scores")
-    plt.ylabel("F1")
-    plt.legend(loc="upper right") 
-
 def main():
     if not os.path.exists("tune_results"):
         os.makedirs("tune_results")
@@ -39,11 +29,11 @@ def main():
     tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
 
     scheduler = ASHAScheduler(
-        metric="F1",
+        metric="oodomain_F1",
         mode="max",
-        max_t=100, # number of eval_every batches
-        grace_period=10,
-        reduction_factor=2
+        max_t=args["max_num_batches"],
+        grace_period=args["min_num_batches"],
+        reduction_factor=2 # taken from pytorch tutorial
     )
 
     timestamp = datetime.now().strftime("%m_%d_%Y_%I_%M_%S_%p")
@@ -56,18 +46,6 @@ def main():
         resources_per_trial={"cpu": args["num_cpu_per_test"], "gpu": args["num_gpu_per_test"]},
         scheduler=scheduler
     )
-    
-    trials = list(results.trial_dataframes.keys())
-    results_dict = dict()
-    for trial in trials:
-        params = json.loads(open(f'{trial}/params.json').read())
-        results = pandas.read_json(f'{trial}/result.json', orient='records', lines=True)
-        results_dict[trial] = (params, results)
-
-    plt.figure(figsize=(15, 12))
-    for trial in results_dict:
-        plot_results(results_dict[trial][2], results_dict[trial][0])
-    plt.savefig(f'tune_results/{args["tune_name"]}_{timestamp}/search_f1_scores.png')
 
 if __name__ == "__main__":
     main()
