@@ -30,20 +30,19 @@ def get_train_test_args():
     
     # where to retrieve the translated queries and context
     parser.add_argument('--trans_queries_dir', type=str, default='queries/beam_1/trans_en_es_queries_beam_1.txt')
-    # for testing process use sample_context.txt for now
-    parser.add_argument('--trans_context_dir', type=str, default='queries/trans_en_es_context.txt')
+    parser.add_argument('--trans_context_dir', type=str, default='queries/beam_1/trans_en_es_context_beam_1.txt')
     
     # where to store the blank line dropped translated queries and context
     parser.add_argument('--dropped_queries_dir', type=str, default='queries/beam_1/trans_en_es_queries_beam_1_dropped.txt')
-    parser.add_argument('--dropped_context_dir', type=str, default='queries/trans_en_es_context_dropped.txt')
+    parser.add_argument('--dropped_context_dir', type=str, default='queries/beam_1/trans_en_es_context_beam_1_dropped.txt')
     
      # where to retrieve the back translated queries and context
     parser.add_argument('--back_trans_queries_dir', type=str, default='queries/beam_1/trans_es_en_queries_beam_1.txt')
-    parser.add_argument('--back_trans_context_dir', type=str, default='queries/trans_es_en_context.txt')
+    parser.add_argument('--back_trans_context_dir', type=str, default='queries/beam_1/trans_es_en_context_beam_1.txt')
     
     # where to store the blank line dropped back translated queries and context
     parser.add_argument('--back_dropped_queries_dir', type=str, default='queries/beam_1/trans_es_en_queries_beam_1_dropped.txt')
-    parser.add_argument('--back_dropped_context_dir', type=str, default='queries/trans_es_en_context_dropped.txt')
+    parser.add_argument('--back_dropped_context_dir', type=str, default='queries/beam_1/trans_es_en_context_beam_1_dropped.txt')
     
     parser.add_argument('--backtranslate_queries_dir', type=str, default='queries/beam_1/backtranslate_queries.txt')
     parser.add_argument('--backtranslate_context_dir', type=str, default='queries/beam_1/backtranslate_context.txt')
