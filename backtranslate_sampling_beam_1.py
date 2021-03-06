@@ -125,10 +125,18 @@ dataset_dict, sample_idx, sample_context_individual_length, gold_answers, answer
 
 print('Sampled queries are being saved at:', args.sample_queries_dir)         
 print('Sampled context are being saved at:', args.sample_context_dir)
+print('Num of examples sampled:', len(sample_idx))
 
 [sample_idx, sample_context_individual_length, gold_answers, answer_locs] = drop_empty_trans(args.trans_queries_dir, args.trans_context_dir, sample_context_individual_length,
                                                                              args.dropped_queries_dir, args.dropped_context_dir, 
                                                                              [sample_idx, sample_context_individual_length, gold_answers, answer_locs])
+print('Num of non-empty examples after translation:', len(sample_idx))
+
+
+[sample_idx, sample_context_individual_length, gold_answers, answer_locs] = drop_empty_trans(args.back_trans_queries_dir, args.back_trans_context_dir, sample_context_individual_length,
+                                                                             args.back_dropped_queries_dir, args.back_dropped_context_dir, 
+                                                                             [sample_idx, sample_context_individual_length, gold_answers, answer_locs])
+print('Num of non-empty examples after back translation:', len(sample_idx))
 
 backtranslated_queries = concat_queries(args.backtranslate_queries_dir)
 backtranslated_context = concat_context(args.backtranslate_context_dir, sample_context_individual_length)
