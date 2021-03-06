@@ -9,7 +9,9 @@ from transformers import DistilBertTokenizerFast
 from args import get_train_test_args
 from train import do_train
 
-def main():
+from search_analysis import plot_results
+
+def do_search():
     if not os.path.exists("tune_results"):
         os.makedirs("tune_results")
 
@@ -37,7 +39,7 @@ def main():
     )
 
     timestamp = datetime.now().strftime("%m_%d_%Y_%I_%M_%S_%p")
-    result = tune.run(
+    results = tune.run(
         partial(do_train, tokenizer=tokenizer),
         config=args,
         name=f'{args["tune_name"]}_{timestamp}',
@@ -47,5 +49,16 @@ def main():
         scheduler=scheduler
     )
 
+    return results, f'{args["tune_name"]}_{timestamp}'
+
 if __name__ == "__main__":
-    main()
+    results, name = do_search()
+
+    trials = list(results.trial_dataframes.keys())
+    results_dict = dict()
+    for trial in trials:
+        trial_id = results.trial_dataframes[trial]["trial_id"][0]
+        results_dict[trial_id] = results.trial_dataframes[trial]
+    results_dict[list(results_dict.keys())[0]].columns
+
+    plot_results(results_dict, f'tune_results/{name}')
