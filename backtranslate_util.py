@@ -32,13 +32,20 @@ def sample_dataset(args, datasets, data_dir, sample_prob = 0.1, seed = 94305,
     return dataset_dict, sample_idx, sample_context_individual_length, gold_answers, answer_locs
     
 
+#def write_queries(queries, output_dir = 'queries/sample_queries.txt'):
+#    with open(output_dir, 'w') as f:
+#        for q in queries:
+#          if not q.endswith('?'):
+#            q += '?'
+#          if q.strip() != '':
+#            f.write(q + '\n')
+            
 def write_queries(queries, output_dir = 'queries/sample_queries.txt'):
     with open(output_dir, 'w') as f:
         for q in queries:
-          if not q.endswith('?'):
+          if not q.endswith('?') and q.strip() != '':
             q += '?'
-          if q.strip() != '':
-            f.write(q + '\n')
+          f.write(q + '\n')
 
 def write_context(context, gold_answers, output_dir = 'queries/sample_context.txt'):
     out_lengths = []
