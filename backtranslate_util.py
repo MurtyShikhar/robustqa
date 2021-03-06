@@ -133,4 +133,4 @@ def compute_backtrans_bleu(original_file, backtrans_file):
   refs = [line.strip() for line in ref_file]
   preds = [line.strip() for line in pred_file]
   bleu = sacrebleu.corpus_bleu(preds, refs)
-  print('Back translation BLEU: {}'.format(bleu.score))
+  return bleu.score
