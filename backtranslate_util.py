@@ -37,7 +37,8 @@ def write_queries(queries, output_dir = 'queries/sample_queries.txt'):
         for q in queries:
           if not q.endswith('?'):
             q += '?'
-          f.write(q + '\n')
+          if q.strip() != '':
+            f.write(q + '\n')
 
 def write_context(context, gold_answers, output_dir = 'queries/sample_context.txt'):
     out_lengths = []
