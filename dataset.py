@@ -29,25 +29,41 @@ def merge(encodings, new_encoding):
             encodings[key] += new_encoding[key]
         return encodings
 
-def get_topic_id_pair(save_dir, uuid):
+def get_topic_id_pair(save_dir, orig_source=False, kmeans=False):
     # a unique <topic:id> mapping per process
-    topic_id_file = f'{save_dir}/topic_id_pair_{UUID}'
-    if os.path.exists(topic_id_file):
-        return topic_id_file, json.loads(open(topic_id_file).read())
+    orig_main_sources = ['squad', 'newsqa', 'nat_questions', 'duorc', 'race', 'relation_extraction']
+    if orig_source:
+        topic_id_pair = {element:idx for idx, element in enumerate(orig_main_sources)} 
+        topic_id_file = None
     else:
-        return topic_id_file, {}
+        # neither orig_source or kmeans is True
+        # use the topics in the files
+        topic_id_file = f'{save_dir}/topic_id_pair_{UUID}'
+        if os.path.exists(topic_id_file):
+            topic_id_pair = json.loads(open(topic_id_file).read())
+        else:
+            topic_id_pair = {}
+    return topic_id_file, topic_id_pair
 
 def save_topic_id_pair(topic_id_file, topic_id_pair):
-    with open(topic_id_file, 'w') as f:
-        json.dump(topic_id_pair, f)
+    if topic_id_file is not None:
+        with open(topic_id_file, 'w') as f:
+            json.dump(topic_id_pair, f)
 
-def get_topic_id(group, topic_id_pair):
+def get_topic_id(group, topic_id_pair, orig_source=False, kmeans=False):
     if "topic" in group:
         # only training data has topic
+        # all training data has topics
         topic = group["topic"]
-        new_id = len(topic_id_pair)
         if topic not in topic_id_pair:
-            topic_id_pair[topic] = new_id
+            if orig_source:
+                # treat unknown topics (outside of the main sources) as "squad"
+                topic = "squad"
+            else:
+                # neither orig_source or kmeans is True
+                # use the topics in the files
+                new_id = len(topic_id_pair)
+                topic_id_pair[topic] = new_id
         return topic, topic_id_pair[topic], topic_id_pair
     else:
         return None, -1, topic_id_pair
@@ -93,16 +109,28 @@ def collapse_data_dict(data_dict):
     
     return data_dict_collapsed
 
-def read_squad(path, save_dir):
+def read_squad(path, save_dir, orig_source=False, kmeans=False):
+    # parameters:
+    # path: path of the file to read from
+    # save_dir: the dir to save the topic_id_pair file where uniq
+    #           topic IDs from the topics are stored
+    # orig_source: Flag for whether use the original source as
+    #              topic IDs, namely "squad", "newsqa", "nat_questions",
+    #              "duorc", "race", "relation_extraction"
+    # kmeans: Use the kmeans clusters as topic IDs.
+
+    # only used when orig_source is True
+
     path = Path(path)
-    topic_id_file, topic_id_pair = get_topic_id_pair(save_dir, uuid)
 
     with open(path, 'rb') as f:
         squad_dict = json.load(f)
 
+    topic_id_file, topic_id_pair = get_topic_id_pair(save_dir, orig_source, kmeans)
+
     data_dict = {'question': [], 'context': [], 'id': [], 'answer': [], 'topic': [], 'topic_id': []}
     for group in squad_dict['data']:
-        topic, topic_id, topic_id_pair = get_topic_id(group, topic_id_pair)
+        topic, topic_id, topic_id_pair = get_topic_id(group, topic_id_pair, orig_source, kmeans)
         for passage in group['paragraphs']:
             context = passage['context']
             for qa in passage['qas']:
