@@ -47,7 +47,7 @@ import os
 
 from docopt import docopt
 import sacrebleu
-from nmt_model import Hypothesis, NMT
+from nmt_model_2layer import Hypothesis, NMT
 import numpy as np
 from typing import List, Tuple, Dict, Set, Union
 from tqdm import tqdm
