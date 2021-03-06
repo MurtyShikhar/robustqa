@@ -118,11 +118,13 @@ def drop_empty_trans(queries_dir, context_dir, sample_context_individual_length,
                       output_queries_dir, output_context_dir, process_lists):
     drop_index = get_empty_trans_index(queries_dir, context_dir, sample_context_individual_length,
                                        output_queries_dir, output_context_dir)
+    dropped_lists = []
 
     for l in process_lists:
-      l = [elem for idx, elem in enumerate(l) if idx not in drop_index]
+      new_l = [elem for idx, elem in enumerate(l) if idx not in drop_index]
+      dropped_lists.append(new_l)
     
-    return process_lists
+    return dropped_lists
 
 def compute_backtrans_bleu(original_file, backtrans_file):
   ref_file = open(original_file, 'r')
