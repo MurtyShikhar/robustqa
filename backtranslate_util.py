@@ -131,3 +131,12 @@ def drop_empty_trans(queries_dir, context_dir, sample_context_individual_length,
       l = [elem for idx, elem in enumerate(l) if idx not in drop_index]
     
     return process_lists
+
+def compute_backtrans_bleu(original_file, backtrans_file):
+  ref_file = open(original_file, 'r')
+  pred_file = open(backtrans_file, 'r')
+  
+  refs = [line.strip() for line in ref_file]
+  preds = [line.strip() for line in pred_file]
+  bleu = sacrebleu.corpus_bleu(preds, refs)
+  print('Back translation BLEU: {}'.format(bleu.score))
