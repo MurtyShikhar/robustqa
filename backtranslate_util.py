@@ -4,6 +4,7 @@ from nltk import tokenize
 # conda install spacy
 # python -m spacy download en_core_web_sm
 import spacy
+import sacrebleu
 
 # load the module
 nlp = spacy.load('en_core_web_sm')
