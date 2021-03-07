@@ -82,9 +82,13 @@ class NMT(nn.Module):
         # the input is y_bar with the dimension of (e+h)*1
         self.decoder_1 = nn.LSTMCell(input_size=embed_size+self.hidden_size, hidden_size=self.hidden_size)
         self.decoder_2 = nn.LSTMCell(input_size = self.hidden_size, hidden_size = self.hidden_size)
-        self.h_projection = nn.Linear(in_features=2*self.hidden_size, out_features=self.hidden_size,
+        self.h_projection_1 = nn.Linear(in_features=2*self.hidden_size, out_features=self.hidden_size,
                                       bias=False)
-        self.c_projection = nn.Linear(in_features=2*self.hidden_size, out_features=self.hidden_size,
+        self.c_projection_1 = nn.Linear(in_features=2*self.hidden_size, out_features=self.hidden_size,
+                                      bias=False)
+        self.h_projection_2 = nn.Linear(in_features=2*self.hidden_size, out_features=self.hidden_size,
+                                      bias=False)
+        self.c_projection_2 = nn.Linear(in_features=2*self.hidden_size, out_features=self.hidden_size,
                                       bias=False)
         self.att_projection = nn.Linear(in_features=2*self.hidden_size, out_features=self.hidden_size,
                                         bias=False)
@@ -121,9 +125,9 @@ class NMT(nn.Module):
         ###     4. Compute log probability distribution over the target vocabulary using the
         ###        combined_outputs returned by the `self.decode()` function.
 
-        enc_hiddens, dec_init_state = self.encode(source_padded, source_lengths)
+        enc_hiddens, dec_init_state_1, dec_init_state_2 = self.encode(source_padded, source_lengths)
         enc_masks = self.generate_sent_masks(enc_hiddens, source_lengths)
-        combined_outputs = self.decode(enc_hiddens, enc_masks, dec_init_state, target_padded)
+        combined_outputs = self.decode(enc_hiddens, enc_masks, dec_init_state_1, dec_init_state_2, target_padded)
         P = F.log_softmax(self.target_vocab_projection(combined_outputs), dim=-1)
 
         # Zero out, probabilities for which we have nothing in the target text
@@ -190,16 +194,21 @@ class NMT(nn.Module):
         enc_hiddens = pad_packed_sequence(enc_hiddens)[0].permute(1,0,2)
 
         # Compute dec_init_state = (init_decoder_hidden, init_decoder_cell)
-        init_decoder_hidden = self.h_projection(torch.cat((last_hidden[0], last_hidden[1]), dim=1))
-        init_decoder_cell = self.c_projection(torch.cat((last_cell[0], last_cell[1]), dim=1))
-        dec_init_state = tuple((init_decoder_hidden, init_decoder_cell))
+        init_decoder_hidden_1 = self.h_projection_1(torch.cat((last_hidden[0], last_hidden[1]), dim=1))
+        init_decoder_cell_1 = self.c_projection_1(torch.cat((last_cell[0], last_cell[1]), dim=1))
+        init_decoder_hidden_2 = self.h_projection_2(torch.cat((last_hidden[2], last_hidden[3]), dim=1))
+        init_decoder_cell_2 = self.c_projection_2(torch.cat((last_cell[2], last_cell[3]), dim=1))
+        dec_init_state_1 = tuple((init_decoder_hidden_1, init_decoder_cell_1))
+        dec_init_state_2 = tuple((init_decoder_hidden_2, init_decoder_cell_2))
         ### END YOUR CODE
 
-        return enc_hiddens, dec_init_state
+        return enc_hiddens, dec_init_state_1, dec_init_state_2
 
 
     def decode(self, enc_hiddens: torch.Tensor, enc_masks: torch.Tensor,
-                dec_init_state: Tuple[torch.Tensor, torch.Tensor], target_padded: torch.Tensor) -> torch.Tensor:
+                dec_init_state_1: Tuple[torch.Tensor, torch.Tensor], 
+                dec_init_state_2: Tuple[torch.Tensor, torch.Tensor], 
+                target_padded: torch.Tensor) -> torch.Tensor:
         """Compute combined output vectors for a batch.
 
         @param enc_hiddens (Tensor): Hidden states (b, src_len, h*2), where
@@ -217,8 +226,8 @@ class NMT(nn.Module):
         target_padded = target_padded[:-1]
 
         # Initialize the decoder state (hidden and cell)
-        dec_state_1 = dec_init_state
-        dec_state_2 = dec_init_state
+        dec_state_1 = dec_init_state_1
+        dec_state_2 = dec_init_state_2
 
         # Initialize previous combined output vector o_{t-1} as zero
         batch_size = enc_hiddens.size(0)
