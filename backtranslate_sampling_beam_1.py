@@ -1,6 +1,6 @@
 from args_beam_1 import get_train_test_args
 import argparse
-from backtranslate_util import sample_dataset, concat_context, concat_queries, get_empty_trans_index, drop_empty_trans
+from backtranslate_util import sample_dataset, concat_context, concat_queries, get_empty_trans_index, drop_empty_trans, compute_backtrans_bleu
 import util
 from transformers import DistilBertTokenizerFast
 
@@ -137,6 +137,12 @@ print('Num of non-empty examples after translation:', len(sample_idx))
                                                                              args.back_dropped_queries_dir, args.back_dropped_context_dir, 
                                                                              [sample_idx, sample_context_individual_length, gold_answers, answer_locs])
 print('Num of non-empty examples after back translation:', len(sample_idx))
+
+queries_bleu = compute_backtrans_bleu(args.sample_queries_dir, args.back_dropped_queries_dir)
+print('Queries back translation BLEU: {}'.format(queries_bleu))
+
+context_bleu = compute_backtrans_bleu(args.sample_context_dir, args.back_dropped_context_dir)
+print('Context back translation BLEU: {}'.format(context_bleu))
 
 backtranslated_queries = concat_queries(args.backtranslate_queries_dir)
 backtranslated_context = concat_context(args.backtranslate_context_dir, sample_context_individual_length)
