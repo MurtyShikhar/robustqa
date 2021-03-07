@@ -1,6 +1,6 @@
 import re
 
-from clustering.FeatureFunction import FeatureFunction
+from features.FeatureFunction import FeatureFunction
 
 
 class AvgSentenceLen(FeatureFunction):
