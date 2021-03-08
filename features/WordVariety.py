@@ -3,7 +3,7 @@ import re
 from features.FeatureFunction import FeatureFunction
 
 
-class AvgSentenceLen(FeatureFunction):
+class WordVariety(FeatureFunction):
 
     def __init__(self):
         super().__init__()
@@ -11,13 +11,14 @@ class AvgSentenceLen(FeatureFunction):
     def evaluate(self, context: str) -> float:
         sentences = re.split("\.|!|\?", context)
         num_words = 0
-        num_sentences = 0
+        unique_words = set()
         for sentence in sentences:
             sentence = sentence.strip()
             if len(sentence) == 0:
                 continue
-            for word in sentence.split():
+            words = sentence.split()
+            for word in words:
                 if word.isalpha():
-                    num_words += 1
-            num_sentences += 1
-        return num_words/num_sentences
+                    unique_words.add(word.lower())
+            num_words += len(words)
+        return len(unique_words)/num_words
