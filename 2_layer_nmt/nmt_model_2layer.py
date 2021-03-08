@@ -113,8 +113,6 @@ class NMT(nn.Module):
         """
         # Compute sentence lengths
         source_lengths = [len(s) for s in source]
-        #print("source", source)
-        #print("source_lengths", source_lengths)
 
         # Convert list of lists into tensors
         source_padded = self.vocab.src.to_input_tensor(source, device=self.device)   # Tensor: (src_len, b)
@@ -432,10 +430,12 @@ class NMT(nn.Module):
         """
         src_sents_var = self.vocab.src.to_input_tensor([src_sent], self.device)
 
-        src_encodings, dec_init_vec = self.encode(src_sents_var, [len(src_sent)])
+        src_encodings, dec_init_vec_1, dec_init_vec_2 = self.encode(src_sents_var, [len(src_sent)])
         src_encodings_att_linear = self.att_projection(src_encodings)
 
-        h_tm1 = dec_init_vec
+        h_tm1 = dec_init_vec_1
+        h_tm2 = dec_init_vec_2
+        
         att_tm1 = torch.zeros(1, self.hidden_size, device=self.device)
 
         eos_id = self.vocab.tgt['</s>']
@@ -462,7 +462,7 @@ class NMT(nn.Module):
 
             x = torch.cat([y_t_embed, att_tm1], dim=-1)
 
-            (h_t, cell_t), att_t, _ = self.step(x, h_tm1,
+            (h_t1, cell_t1), (h_t2, cell_t2), att_t, _ = self.step(x, h_tm1, h_tm2,
                                                       exp_src_encodings, exp_src_encodings_att_linear, enc_masks=None)
 
             # log probabilities over target words
@@ -498,7 +498,8 @@ class NMT(nn.Module):
                 break
 
             live_hyp_ids = torch.tensor(live_hyp_ids, dtype=torch.long, device=self.device)
-            h_tm1 = (h_t[live_hyp_ids], cell_t[live_hyp_ids])
+            h_tm1 = (h_t1[live_hyp_ids], cell_t1[live_hyp_ids])
+            h_tm2 = (h_t2[live_hyp_ids], cell_t2[live_hyp_ids])
             att_tm1 = att_t[live_hyp_ids]
 
             hypotheses = new_hypotheses
