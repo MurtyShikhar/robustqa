@@ -4,6 +4,7 @@ from nltk import tokenize
 # conda install spacy
 # python -m spacy download en_core_web_sm
 import spacy
+import sacrebleu
 
 # load the module
 nlp = spacy.load('en_core_web_sm')
@@ -132,5 +133,5 @@ def compute_backtrans_bleu(original_file, backtrans_file):
   
   refs = [line.strip() for line in ref_file]
   preds = [line.strip() for line in pred_file]
-  bleu = sacrebleu.corpus_bleu(preds, refs)
-  print('Back translation BLEU: {}'.format(bleu.score))
+  bleu = sacrebleu.corpus_bleu(preds, [refs])
+  return bleu.score
