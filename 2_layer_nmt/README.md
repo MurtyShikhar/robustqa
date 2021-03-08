@@ -1,4 +1,4 @@
-# 2 layer NMT 
+# 2-Layer NMT 
 
 ## Language
 - Source Language: English 
