@@ -3,14 +3,37 @@
 ## Language
 Source Language: English 
 
-Pivot Languages: Spanish (TED Talks from 2020 CS224N Assignment 4), Vietnamese (IWSLT 2015)
+Pivot Languages: Spanish (TED Talks from 2020 CS224N Assignment 4), Vietnamese (IWSLT 2015) 
+
+*Need to find the exact source of the Spanish Language*
 
 ### Vocab Size
-English: 16K
 
-Spanish:13K
+**English: 16K**
 
-Vietnamese: 8K
+**Spanish:13K**
+
+Spanish vocab size is determined by domain knowledge in linguistics. 
+
+**Vietnamese: 8K**
+
+Vietnamese Vocab size is determined according to the benchmark listed here: [Stanford NLP (word-level)](https://nlp.stanford.edu/projects/nmt/), [Tensorflow NMT](https://github.com/tensorflow/nmt#iwslt-english-vietnamese)
+
+## Hyperparameter
+
+2 hidden layer; benchmark: [Tensorflow NMT](https://github.com/tensorflow/nmt#iwslt-english-vietnamese), [Stanford NLP (word-level)](https://nlp.stanford.edu/projects/nmt/)
+
+learning rate: 7.5e-4; by experiment 
+
+patience = 2; by experiment 
+
+batch size = 64; by experiment 
+
+dropout = 0.2; benchmark: [Tensorflow NMT](https://github.com/tensorflow/nmt#iwslt-english-vietnamese), [Stanford NLP (word-level)](https://nlp.stanford.edu/projects/nmt/)
+
+hidden size = 512; benchmark: [Tensorflow NMT](https://github.com/tensorflow/nmt#iwslt-english-vietnamese)
+
+embed size = 512; benchmark: [Tensorflow NMT](https://github.com/tensorflow/nmt#iwslt-english-vietnamese)
 
 ## Back-Translation  
 
