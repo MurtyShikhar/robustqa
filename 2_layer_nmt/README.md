@@ -2,11 +2,14 @@
 
 ## Language
 Source Language: English 
+
 Pivot Languages: Spanish (TED Talks from 2020 CS224N Assignment 4), Vietnamese (IWSLT 2015)
 
 ### Vocab Size
 English: 16K
+
 Spanish:13K
+
 Vietnamese: 8K
 
 ## BackTranslation  
