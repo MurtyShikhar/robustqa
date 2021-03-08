@@ -12,7 +12,7 @@ Spanish:13K
 
 Vietnamese: 8K
 
-## BackTranslation  
+## Back-Translation  
 
 _Use English - Spanish - English with beam size = 1 as an example_
 
