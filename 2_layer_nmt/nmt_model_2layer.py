@@ -189,7 +189,8 @@ class NMT(nn.Module):
         # model_embeddings.source is the random initialized embedding layer
         X = self.model_embeddings.source(source_padded)
         # pack_padded_sequence takes input and lengths parameter to be Tensors
-        enc_hiddens, (last_hidden, last_cell) = self.encoder(pack_padded_sequence(input=X, lengths=torch.Tensor(source_lengths)))
+        # print(source_lengths)
+        enc_hiddens, (last_hidden, last_cell) = self.encoder(pack_padded_sequence(input=X, lengths=source_lengths))
         # pad_packed_sequence returns padded_output, lengths
         enc_hiddens = pad_packed_sequence(enc_hiddens)[0].permute(1,0,2)
         # reshape last_hidden and last_cell

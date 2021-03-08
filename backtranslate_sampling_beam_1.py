@@ -31,7 +31,7 @@ from transformers import DistilBertTokenizerFast
 #         tokenized_examples["offset_mapping"][i] = [
 #             (o if sequence_ids[k] == 1 else None)
 #             for k, o in enumerate(tokenized_examples["offset_mapping"][i])
-#         ]
+#         ] 
 
 #     return tokenized_examples
 
