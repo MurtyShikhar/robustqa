@@ -113,6 +113,8 @@ class NMT(nn.Module):
         """
         # Compute sentence lengths
         source_lengths = [len(s) for s in source]
+        #print("source", source)
+        #print("source_lengths", source_lengths)
 
         # Convert list of lists into tensors
         source_padded = self.vocab.src.to_input_tensor(source, device=self.device)   # Tensor: (src_len, b)
