@@ -1,24 +1,36 @@
-#Text pre-processing
-"""removes punctuation, stopwords, and returns a list of the remaining words, or tokens"""
 import nltk
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
-from sklearn.preprocessing import normalize
+from sklearn.decomposition import TruncatedSVD
 import matplotlib.pyplot as plt
-import args
-import util
-
-args = args.get_train_test_args()
-
-nltk.download('stopwords')
-nltk.download('wordnet')
-
-#Cleaning the text
-
+import args as args_dependency
+import dataset
 import string
+from typing import List
+import numpy as np
+
+from features.FeatureFunction import FeatureFunction
+from features.AvgSentenceLen import AvgSentenceLen
+
+
+# If we come up with feature extractors we should add them to this list
+CUSTOM_FEATURE_EXTRACTORS: List[FeatureFunction] = [AvgSentenceLen()]
+SVD_COMPONENTS = 1000  # Increase this for a more accurate dim-reduction, decrease it for a smaller one.
+
+
+def extract_custom_features(contexts: List[str]):
+    custom_features = np.zeros((len(contexts), len(CUSTOM_FEATURE_EXTRACTORS)))
+    for i in range(len(contexts)):
+        for j in range(len(CUSTOM_FEATURE_EXTRACTORS)):
+            custom_features[i, j] = CUSTOM_FEATURE_EXTRACTORS[j].evaluate(contexts[i])
+    return custom_features
+
+
+#Text pre-processing
 def text_process(text):
+    """removes punctuation, stopwords, and returns a list of the remaining words, or tokens"""
     '''
     Takes in a string of text, then performs the following:
     1. Remove all punctuation
@@ -32,28 +44,51 @@ def text_process(text):
     nopunc =  [word.lower() for word in nopunc.split() if word not in stopwords.words('english')]
     return [stemmer.lemmatize(word) for word in nopunc]
 
-# read data
-data = util.read_squad("datasets_augmented/indomain_train/squad_subset", args['save_dir'])
-X_train = data['context']
-#print (X_train)
+def normalize_matrix_so_cols_have_zero_mean_unit_variance(mtx: np.ndarray) -> np.ndarray:
+    mtx -= np.mean(mtx, axis=0).reshape(1, -1)
+    mtx /= np.std(mtx, axis=0).reshape(1, -1)
+    return mtx
 
-#Vectorisation : -
-tfidfconvert = TfidfVectorizer(analyzer=text_process).fit(X_train)
+def main():
+    args = args_dependency.get_train_test_args()
 
-X_transformed=tfidfconvert.transform(X_train)
-X_transformed_array = X_transformed.toarray()
-normalized_X_transformed = normalize(X_transformed_array, axis=1)
-# Clustering the training sentences with K-means technique
+    nltk.download('stopwords')
+    nltk.download('wordnet')
 
-K = range(1,100)
-Sum_of_squared_distances = []
-for k in K:
-    km = KMeans(n_clusters=k)
-    km = km.fit(normalized_X_transformed)
-    Sum_of_squared_distances.append(km.inertia_)
+    # read data
+    data = dataset.read_squad("datasets_augmented/indomain_train/squad_subset", args['save_dir'])
+    X_train = data['context']
 
-plt.plot(K, Sum_of_squared_distances, 'bx-')
-plt.xlabel('k')
-plt.ylabel('Sum_of_squared_distances')
-plt.title('Elbow Method For Optimal k')
-plt.show()
+    # get custom features before modifying contexts
+    custom_features = extract_custom_features(X_train)
+
+    #Vectorisation : -
+    tfidfconvert = TfidfVectorizer(analyzer=text_process).fit(X_train)
+
+    X_transformed=tfidfconvert.transform(X_train)
+    svd = TruncatedSVD(n_components=SVD_COMPONENTS, random_state=args["seed"])
+    X_reduced = svd.fit_transform(X_transformed)
+
+    # append the custom features for the full feature set
+    raw_k_means_features = np.concatenate((X_reduced, custom_features), axis=1)
+
+    # normalize each column to have 0 mean and unit variance
+    k_means_features = normalize_matrix_so_cols_have_zero_mean_unit_variance(raw_k_means_features)
+
+    # Cluster the training sentences with K-means technique
+    K = range(4,100)
+    Sum_of_squared_distances = []
+    for k in K:
+        km = KMeans(n_clusters=k)
+        km = km.fit(k_means_features)
+        Sum_of_squared_distances.append(km.inertia_)
+
+    plt.plot(K, Sum_of_squared_distances, 'bx-')
+    plt.xlabel('k')
+    plt.ylabel('Sum_of_squared_distances')
+    plt.title('Elbow Method For Optimal k')
+    plt.show()
+
+
+if __name__ == "__main__":
+    main()
