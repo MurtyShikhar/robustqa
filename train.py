@@ -66,7 +66,8 @@ def prepare_eval_data(dataset_dict, tokenizer):
                                    padding='max_length')
     # Since one example might give us several features if it has a long context, we need a map from a feature to
     # its corresponding example. This key gives us just that.
-    sample_mapping = tokenized_examples.pop("overflow_to_sample_mapping")
+    #sample_mapping = tokenized_examples.pop("overflow_to_sample_mapping")
+    sample_mapping = tokenized_examples["overflow_to_sample_mapping"]
     offset_mapping = tokenized_examples["offset_mapping"]
 
     # For evaluation, we will need to convert our predictions to substrings of the context, so we keep the
@@ -90,6 +91,10 @@ def prepare_eval_data(dataset_dict, tokenizer):
         start_char = answer['answer_start'][0]
         end_char = start_char + len(answer['text'][0])
         tokenized_examples['id'].append(dataset_dict['id'][sample_index])
+        tokenized_examples['offset_mapping'][i] = [
+                (o if sequence_ids[k] == 1 else None)
+                for k, o in enumerate(tokenized_examples["offset_mapping"][i])
+        ]
         # Start token index of the current span in the text.
         token_start_index = 0
         while sequence_ids[token_start_index] != 1:
