@@ -16,6 +16,7 @@ import os
 
 from util import get_logger
 from args import get_train_test_args
+from collections import Counter
 
 from features.FeatureFunction import FeatureFunction
 from features.AdjectivePercentage import AdjectivePercentage
@@ -121,7 +122,7 @@ def load_text(log):
 
     return X_train, X_train_processed, custom_features, text_to_id_dict
 
-def prepare_features(log, results_folder, max_tfidf_features, custom_feature_scale, X_train, custom_features):
+def prepare_features(log, max_tfidf_features, custom_feature_scale, X_train, custom_features):
     log.info(f"Scaling custom features with scale {custom_feature_scale}...")
     custom_features *= 1 / (max_tfidf_features ** 0.5) * custom_feature_scale
 
@@ -137,7 +138,7 @@ def prepare_features(log, results_folder, max_tfidf_features, custom_feature_sca
     log.info("Normalizing concatenated features...")
     # normalize each column to have 0 mean and unit variance
     k_means_features = normalize(raw_k_means_features, axis=1)
-    np.savetxt(f'{results_folder}/kmeansfeatures.csv', k_means_features, delimiter=',')
+    np.savetxt(f'clustering/kmeansfeature_{max_tfidf_features}_{custom_feature_scale}.csv', k_means_features, delimiter=',')
 
     return k_means_features
 
@@ -151,6 +152,8 @@ def cluster(log, results_folder, num_clusters, num_iters, k_means_features):
     log.info(f'Kmeans is complete. Histogram: {hist}')
 
     kmeans_dict = {get_hash_str(X_train[idx]): int(label) for idx, label in enumerate(clusters.labels_)}
+    cluster_sizes = list(Counter(clusters.labels_).values())
+    log.info(f'Kmeans biggest cluster / smallest cluster:  {max(cluster_sizes)} / {min(cluster_sizes)} = {max(cluster_sizes) / min(cluster_sizes)}')
 
     log.info(f"Saving kmeans clusters in {results_folder}/kmeans_clusters.json...")
     with open(f'{results_folder}/kmeans_clusters.json', 'w') as f:
@@ -159,7 +162,6 @@ def cluster(log, results_folder, num_clusters, num_iters, k_means_features):
     return clusters
 
 def gen_cooccurrance_matrix(results_folder, text_to_id_dict, num_clusters, clusters, X_train):
-
     # Build the matrix with cluster IDs as rows, topic IDs as columns
     topics_id = []
     for k, v in text_to_id_dict.items():
@@ -206,13 +208,14 @@ if __name__ == "__main__":
     X_train, X_train_processed, custom_features, text_to_id_dict = load_text(log)
     for max_features in max_tf_idf_features:
         for scale in custom_feature_scale:
+            k_means_features = prepare_features(log, max_features, scale, X_train_processed, custom_features)
+
             for clusters in num_clusters:
                 for iters in num_iters:
                     results_folder = results_folder_format.format(max_features, scale, clusters, iters)
                     if not os.path.exists(results_folder):
                         os.mkdir(results_folder)
 
-                    k_means_features = prepare_features(log, results_folder, max_features, scale, X_train_processed, custom_features)
                     k_means_clusters = cluster(log, results_folder, clusters, iters, k_means_features)
                     gen_cooccurrance_matrix(results_folder, text_to_id_dict, clusters, k_means_clusters, X_train)
                     log.info("Trial complete...")
