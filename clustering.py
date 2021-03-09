@@ -15,19 +15,28 @@ import json
 import hashlib
 import pickle
 import os
+from args import get_train_test_args
 
 from features.FeatureFunction import FeatureFunction
+from features.AdjectivePercentage import AdjectivePercentage
 from features.AvgSentenceLen import AvgSentenceLen
+from features.CoordinatingConjunctionPercentage import CoordinatingConjunctionPercentage
+from features.LanguageCount import LanguageCount
+from features.MaxSentenceLen import MaxSentenceLen
 from features.MaxWordRepetition import MaxWordRepetition
+from features.MinSentenceLen import MinSentenceLen
+from features.NounPercentage import NounPercentage
 from features.NumberOfAlnums import NumberOfAlnums
-from features.WordVariety import WordVariety
 from features.NumberOfCommas import NumberOfCommas
-
-
+from features.PrepositionPercentage import PrepositionPercentage
+from features.SentimentAnalysis import SentimentAnalysis
+from features.WordVariety import WordVariety
 
 # If we come up with feature extractors we should add them to this list
-CUSTOM_FEATURE_EXTRACTORS: List[FeatureFunction] = [AvgSentenceLen(), MaxWordRepetition(), NumberOfCommas(), NumberOfAlnums(),
-                                                    WordVariety()]
+CUSTOM_FEATURE_EXTRACTORS: List[FeatureFunction] = [AdjectivePercentage(), AvgSentenceLen(), CoordinatingConjunctionPercentage()
+                                                    , LanguageCount(), MaxSentenceLen(), MaxWordRepetition(), MinSentenceLen()
+                                                    , NounPercentage(), NumberOfAlnums(), NumberOfCommas(), PrepositionPercentage()
+                                                    , SentimentAnalysis(), WordVariety()]
 
 
 def extract_custom_features(contexts: List[str]):
@@ -36,7 +45,6 @@ def extract_custom_features(contexts: List[str]):
         for j in range(len(CUSTOM_FEATURE_EXTRACTORS)):
             custom_features[i, j] = CUSTOM_FEATURE_EXTRACTORS[j].evaluate(contexts[i])
     return custom_features
-
 
 #Text pre-processing
 def text_process(text):
@@ -63,52 +71,50 @@ def normalize_matrix_so_cols_have_zero_mean_unit_variance(mtx: np.ndarray) -> np
     mtx /= np.std(mtx, axis=0).reshape(1, -1)
     return mtx
 
-def main():
-    args = args_dependency.get_train_test_args()
-
-    nltk.download('stopwords')
-    nltk.download('wordnet')
-
-    max_tfidf_features = 300
-    custom_feature_scale = 6
-
+def get_contexts():
     # read data
-    data = ['datasets/indomain_train/squad',
-	   'datasets/indomain_train/nat_questions',
-	   'datasets/indomain_train/newsqa',
-	   'datasets/oodomain_train/duorc',
-	   'datasets/oodomain_train/race',
-	   'datasets/oodomain_train/relation_extraction']
+    data = ['datasets/indomain_train/squad', 'datasets/indomain_train/nat_questions', 'datasets/indomain_train/newsqa'
+        ,'datasets/oodomain_train/duorc', 'datasets/oodomain_train/race', 'datasets/oodomain_train/relation_extraction']
 
     all_data = {}
     for i in data:
         data_dict = ds.read_squad(i, 'save')
         all_data = ds.merge(data_dict, all_data)
 
-    X_train = list(set(all_data['context']))
+    return list(set(all_data['context'])), dict(zip(all_data['context'], all_data['topic_id']))
 
-    # for use in constructing co-occurrence matrix
-    text_to_id_dict = dict(zip(all_data['context'], all_data['topic_id']))
+def read_from_cache():
+    cached_processed = 'save/all_train_text_processed_brynnemh'
+    if os.path.exists(cached_processed):
+        return pickle.load(open(cached_processed, 'rb'))
+    else:
+        X_train_processed = [' '.join(text_process(item)) for item in X_train]
+        pickle.dump(X_train_processed, open(cached_processed, 'wb'))
+
+        return X_train_processed
+
+def main(args):
+    args = args_dependency.get_train_test_args()
+
+    max_tfidf_features = args["max_tfidf_features"]
+    custom_feature_scale = args["custom_feature_scale"]
+    num_clusters = args["num_clusters"]
+    num_iters = args["kmeans_iters"]
+
+    X_train, text_to_id_dict = get_contexts()
 
     # get custom features before modifying contexts
     custom_features = extract_custom_features(X_train)
 
     #Vectorisation : -
-    cached_processed = 'save/all_train_text_processed3'
-    if os.path.exists(cached_processed):
-        X_train_processed = pickle.load(open(cached_processed, 'rb'))
-    else:
-        X_train_processed = [' '.join(text_process(item)) for item in X_train]
-        pickle.dump(X_train_processed, open(cached_processed, 'wb'))
-
+    X_train_processed = read_from_cache()
     tfidfconvert = TfidfVectorizer(max_features=max_tfidf_features, sublinear_tf=True, max_df=0.7, min_df=0.0001).fit(X_train_processed)
-
     X_transformed=tfidfconvert.transform(X_train_processed)
     pickle.dump(tfidfconvert, open("save/tfidf_max07_min00001_2.pickle", "wb"))
     pickle.dump(X_transformed, open("save/train_text_features_max07_min00001_2.pickle", "wb"))
 
     custom_features = normalize_matrix_so_cols_have_zero_mean_unit_variance(custom_features)
-    custom_features *= 1/(max_tfidf_features ** 0.5) * custom_feature_scale
+    custom_features *= 1 / (max_tfidf_features ** 0.5) * custom_feature_scale
 
     # append the custom features for the full feature set
     raw_k_means_features = np.concatenate((X_transformed.toarray(), custom_features), axis=1)
@@ -118,11 +124,11 @@ def main():
     np.save('save/kmeansfeatures', k_means_features)
 
     # Cluster the training sentences with K-means technique
-    km = KMeans(n_clusters=20, n_init=30)
+    km = KMeans(n_clusters=num_clusters, n_init=num_iters)
     modelkmeans20 = km.fit(k_means_features)
 
     hist, bins = np.histogram(modelkmeans20.labels_, bins=20)
-    print (hist)
+    print(hist)
 
     kmeans_dict = {get_hash_str(X_train[idx]): int(label) for idx, label in enumerate(modelkmeans20.labels_)}
 
@@ -157,4 +163,8 @@ def main():
     '''
 
 if __name__ == "__main__":
-    main()
+    nltk.download('stopwords')
+    nltk.download('wordnet')
+
+    args = get_train_test_args()
+    main(args)

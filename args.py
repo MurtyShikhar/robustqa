@@ -38,7 +38,6 @@ def get_train_test_args():
     parser.add_argument('--orig-sources-as-topics', action='store_true') 
     parser.add_argument('--kmeans-clusters-as-topics', action='store_true') 
     
-
     # arguments for hyperparameter search
     parser.add_argument("--tune-name", type=str, default="hyperparam-search")
     parser.add_argument('--num-gpu-per-test', type=int, default=0)
@@ -49,6 +48,12 @@ def get_train_test_args():
     parser.add_argument('--tune-checkpoint-path', type=str)
 
     parser.add_argument('--tune', action='store_true')
+
+    # arguments for clustering
+    parser.add_argument('--max-tfidf-features', type=int, default=300)
+    parser.add_argument('--custom-feature-scale', type=int, default=6)
+    parser.add_argument('--num-clusters', type=int, default=20)
+    parser.add_argument('--kmeans-iters', type=int, default=6)
 
     args = parser.parse_args()
     return vars(args) # return as dict to support hyperparam search
