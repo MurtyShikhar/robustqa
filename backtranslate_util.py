@@ -98,7 +98,7 @@ def get_empty_trans_index(queries_dir, context_dir, sample_context_individual_le
     output_c_file = open(output_context_dir, 'w')
     
     num_samples = len(sample_context_individual_length)
-    drop_index = []
+    keep_index = []
     
     for i in range(num_samples):
       drop = False
@@ -116,14 +116,13 @@ def get_empty_trans_index(queries_dir, context_dir, sample_context_individual_le
           else:
             context.append(c)
       
-      if drop:
-        drop_index.append(i)
-      else:
+      if not drop:
+        keep_index.append(i)
         output_q_file.write(q)
         for c in context:
           output_c_file.write(c)
           
-    return drop_index
+    return keep_index
   
 def drop_empty_trans(queries_dir, context_dir, sample_context_individual_length,
                       output_queries_dir, output_context_dir, process_lists):
