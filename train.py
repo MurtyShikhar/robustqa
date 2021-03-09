@@ -24,6 +24,8 @@ from tqdm import tqdm
 from dataset import QADataset
 import dataset as ds
 
+BERT_HIDDEN_DIM = 768
+
 def prepare_test_data(dataset_dict, tokenizer):
     tokenized_examples = tokenizer(dataset_dict['question'],
                                    dataset_dict['context'],
@@ -218,6 +220,7 @@ def read_and_process(args, tokenizer, dataset_dict, dir_name, dataset_name, spli
     #TODO: cache this if possible
     cache_path = f'{dir_name}/{dataset_name}_encodings.pt'
     if os.path.exists(cache_path) and not args["recompute_features"]:
+        print("WARNING: USING CACHED DATASET. MAKE SURE THIS IS WHAT YOU WANT.")
         tokenized_examples = util.load_pickle(cache_path)
     else:
         if split=='train':
@@ -230,6 +233,8 @@ def read_and_process(args, tokenizer, dataset_dict, dir_name, dataset_name, spli
 #TODO: use a logger, use tensorboard
 class Trainer():
     def __init__(self, args, log,
+                 # This argument is only used for domain-adv training
+                 num_topics: int = 0,
                  # Don't pass in this argument if you want to run without a domain-adversarial loss term
                  discriminator: Optional[DomainDiscriminator] = None):
         self.lr = args["lr"]
@@ -246,7 +251,7 @@ class Trainer():
         self.log = log
         self.visualize_predictions = args["visualize_predictions"]
         self.discriminator = discriminator
-        self.num_domains = 20  # TODO: We should be able set this to a meaningful number based on the data
+        self.num_domains = num_topics
         self.adv_loss_weight = args["adv_loss_weight"]
         self.discrim_step_multiplier = args["discriminator_step_multiplier"]
         self.nll_weights = None  # This will be initialized later
@@ -368,7 +373,6 @@ class Trainer():
                         hidden_cls = outputs.hidden_states[6][:, 0, :].to(device)
 
                         labels = batch['topic_id'].to(device)
-                        labels = torch.remainder(labels, self.num_domains)  # TODO: This is a really crude clustering method, improve?
                         log_prob = self.discriminator(hidden_cls).to(device)
                         targets = torch.ones_like(log_prob) * (1/self.num_domains)
                         kl_criterion = torch.nn.KLDivLoss(reduction="batchmean")
@@ -517,9 +521,6 @@ def do_train(args, tokenizer):
     log.info("Preparing Training Data...")
     args["device"] = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-    discriminator = DomainDiscriminator(20, 768)  # TODO: replace these 'magic numbers' with better param values
-    trainer = Trainer(args, log, discriminator)
-
     if not args['train_wo_oodomain']:
         train_dataset, _ = get_dataset(log, args, args["train_datasets"], args["train_dir"], tokenizer, 'train'
                                        , args["oodomain_train_datasets"], args["oodomain_train_dir"], 
@@ -527,6 +528,10 @@ def do_train(args, tokenizer):
     else:
         train_dataset, _ = get_dataset(log, args, args["train_datasets"], args["train_dir"], tokenizer, 'train', orig_source=args["orig_sources_as_topics"],
                 kmeans=args["kmeans_clusters_as_topics"])
+
+    num_topics = train_dataset.num_topics()
+    discriminator = DomainDiscriminator(num_topics, BERT_HIDDEN_DIM)
+    trainer = Trainer(args, log, num_topics, discriminator)
 
     log.info("Preparing Validation Data...")
     in_val_dataset, in_val_dict = get_dataset(log, args, args["train_datasets"], args["val_dir"], tokenizer, 'val')
