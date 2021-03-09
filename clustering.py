@@ -3,7 +3,6 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
-from sklearn.decomposition import TruncatedSVD
 from sklearn.preprocessing import normalize
 import matplotlib.pyplot as plt
 import dataset as ds
@@ -37,8 +36,7 @@ from features.WordVariety import WordVariety
 CUSTOM_FEATURE_EXTRACTORS: List[FeatureFunction] = [AvgSentenceLen(), MaxSentenceLen(), MinSentenceLen()
                                                     , AdjectivePercentage(), CoordinatingConjunctionPercentage()
                                                     , NounPercentage(), PrepositionPercentage()
-                                                    , MaxWordRepetition()
-                                                    , NumberOfAlnums(), NumberOfCommas()
+                                                    , MaxWordRepetition(), NumberOfAlnums(), NumberOfCommas()
                                                     , SentimentAnalysis(), WordVariety()]
 
 
@@ -49,16 +47,16 @@ def extract_custom_features(log, contexts: List[str]):
         log.info("Loading custom features from cache...")
         return pickle.load(open(cached_custom_features, 'rb'))
     else:
-        log.info("Saving custom features in cache...")
+        log.info("Extracting custom features...")
         custom_features = np.zeros((len(contexts), len(CUSTOM_FEATURE_EXTRACTORS)))
         for i in range(len(contexts)):
             if i % 100 == 0:
                 log.info(f'Iteration {i}/{len(contexts)}')
             for j in range(len(CUSTOM_FEATURE_EXTRACTORS)):
                 value = CUSTOM_FEATURE_EXTRACTORS[j].evaluate(contexts[i])
-                print(j, value)
                 custom_features[i, j] = value
 
+        log.info("Saving custom features in cache...")
         pickle.dump(custom_features, open(cached_custom_features, 'wb'))
         return custom_features
 
@@ -89,9 +87,9 @@ def normalize_matrix_so_cols_have_zero_mean_unit_variance(mtx: np.ndarray) -> np
 
 def get_contexts(log):
     # read data
-    data = ['datasets/indomain_train/newsqa_subset']
+    data =['datasets/indomain_train/newsqa_subset']
     # data = ['datasets/indomain_train/squad', 'datasets/indomain_train/nat_questions', 'datasets/indomain_train/newsqa'
-        # ,'datasets/oodomain_train/duorc', 'datasets/oodomain_train/race', 'datasets/oodomain_train/relation_extraction']
+    #     ,'datasets/oodomain_train/duorc', 'datasets/oodomain_train/race', 'datasets/oodomain_train/relation_extraction']
 
     all_data = {}
     for i in data:
@@ -101,8 +99,8 @@ def get_contexts(log):
 
     return list(set(all_data['context'])), dict(zip(all_data['context'], all_data['topic_id']))
 
-def read_from_cache(log, X_train):
-    cached_processed = 'clustering/all_train_text_processed_brynnemh'
+def read_text_from_cache(log, X_train):
+    cached_processed = 'clustering/all_train_text_processed'
     if os.path.exists(cached_processed):
         log.info("Loading processed data from cache...")
         return pickle.load(open(cached_processed, 'rb'))
@@ -113,69 +111,67 @@ def read_from_cache(log, X_train):
 
         return X_train_processed
 
-def main(args):
-    max_tfidf_features = args["max_tfidf_features"]
-    custom_feature_scale = args["custom_feature_scale"]
-    num_clusters = args["num_clusters"]
-    num_iters = args["kmeans_iters"]
-
-    if not os.path.exists("clustering"):
-        os.makedirs("clustering")
-    results_folder = f'clustering/max_tfidf_{max_tfidf_features}_custom_scale_{custom_feature_scale}_num_clusters_{num_clusters}_iters_{num_iters}'
-    if not os.path.exists(results_folder):
-        os.mkdir(results_folder)
-    log = get_logger(results_folder, 'log_clustering')
-
+def load_text(log):
     X_train, text_to_id_dict = get_contexts(log)
-
     # get custom features before modifying contexts
     custom_features = extract_custom_features(log, X_train)
-
-    #Vectorisation : -
-    X_train_processed = read_from_cache(log, X_train)
-    log.info("Extracting TF/IDF features...")
-    tfidfconvert = TfidfVectorizer(max_features=max_tfidf_features, sublinear_tf=True, max_df=0.7, min_df=0.0001).fit(X_train_processed)
-    X_transformed=tfidfconvert.transform(X_train_processed)
-    pickle.dump(tfidfconvert, open(f"clustering/tfidf_max07_min00001_2.pickle", "wb"))
-    pickle.dump(X_transformed, open("clustering/train_text_features_max07_min00001_2.pickle", "wb"))
-
     log.info("Normalizing custom features...")
     custom_features = normalize_matrix_so_cols_have_zero_mean_unit_variance(custom_features)
+    X_train_processed = read_text_from_cache(log, X_train)
+
+    return X_train, X_train_processed, custom_features, text_to_id_dict
+
+def prepare_features(log, results_folder, max_tfidf_features, custom_feature_scale, X_train, custom_features):
+    log.info(f"Scaling custom features with scale {custom_feature_scale}...")
     custom_features *= 1 / (max_tfidf_features ** 0.5) * custom_feature_scale
+
+    log.info(f"Extracting TF/IDF features with max {max_tfidf_features}...")
+    tfidfconvert = TfidfVectorizer(max_features=max_tfidf_features, sublinear_tf=True, max_df=0.7, min_df=0.0001).fit(X_train)
+    X_transformed = tfidfconvert.transform(X_train)
+    pickle.dump(tfidfconvert, open(f"clustering/tfidf_max07_min00001_2.pickle", "wb"))
+    pickle.dump(X_transformed, open("clustering/train_text_features_max07_min00001_2.pickle", "wb"))
 
     # append the custom features for the full feature set
     raw_k_means_features = np.concatenate((X_transformed.toarray(), custom_features), axis=1)
 
-    log.info("Normalizing custom features...")
+    log.info("Normalizing concatenated features...")
     # normalize each column to have 0 mean and unit variance
     k_means_features = normalize(raw_k_means_features, axis=1)
-    np.save(f'{results_folder}/kmeansfeatures', k_means_features)
+    np.savetxt(f'{results_folder}/kmeansfeatures.csv', k_means_features, delimiter=',')
 
+    return k_means_features
+
+def cluster(log, results_folder, num_clusters, num_iters, k_means_features):
     # Cluster the training sentences with K-means technique
-    log.info("Generating clusters with kmeans...")
+    log.info(f'Generating {num_clusters} clusters with kmeans...')
     km = KMeans(n_clusters=num_clusters, n_init=num_iters)
-    modelkmeans20 = km.fit(k_means_features)
+    clusters = km.fit(k_means_features)
 
-    hist, bins = np.histogram(modelkmeans20.labels_, bins=num_clusters)
+    hist, bins = np.histogram(clusters.labels_, bins=num_clusters)
     log.info(f'Kmeans is complete. Histogram: {hist}')
 
-    kmeans_dict = {get_hash_str(X_train[idx]): int(label) for idx, label in enumerate(modelkmeans20.labels_)}
+    kmeans_dict = {get_hash_str(X_train[idx]): int(label) for idx, label in enumerate(clusters.labels_)}
 
-    log.info("Saving kmeans clusters...")
-    with open(f'{results_folder}/topic_id_pair_kmeans_{num_clusters}_{num_iters}', 'w') as f:
-        json.dump(kmeans_dict, f)
+    log.info(f"Saving kmeans clusters in {results_folder}/kmeans_clusters.json...")
+    with open(f'{results_folder}/kmeans_clusters.json', 'w') as f:
+        json.dump(kmeans_dict, f, indent=2)
+
+    return clusters
+
+def gen_cooccurrance_matrix(results_folder, text_to_id_dict, num_clusters, clusters, X_train):
 
     # Build the matrix with cluster IDs as rows, topic IDs as columns
     topics_id = []
     for k, v in text_to_id_dict.items():
-        if v not in topics_id:
-            topics_id.append(v)
+        if str(v) not in topics_id:
+            topics_id.append(str(v))
     num_topics = len(topics_id)
-    co_occurance = np.zeros((num_topics, 20))
-    for idx, cluster in enumerate(modelkmeans20.labels_):
+    co_occurance = np.zeros((num_clusters, num_topics), dtype=int)
+    for idx, cluster in enumerate(clusters.labels_):
         topic_id = int(text_to_id_dict[X_train[idx]])
-        co_occurance[topic_id][int(cluster)] += 1
-    np.save(f'{results_folder}/kmeans_co_occurance_{num_clusters}_{num_iters}', co_occurance)
+        co_occurance[int(cluster)][topic_id] += 1
+    np.savetxt(f'{results_folder}/kmeans_co_occurance.csv', co_occurance
+        , delimiter=',', header=','.join(topics_id), fmt="%d")
 
     '''
     K = range(4,100)
@@ -197,5 +193,27 @@ if __name__ == "__main__":
     nltk.download('wordnet')
     nltk.download('punkt')
 
-    args = get_train_test_args()
-    main(args)
+    if not os.path.exists("clustering"):
+        os.makedirs("clustering")
+    log = get_logger("clustering", "log_clustering")
+
+    max_tf_idf_features = [100, 200, 300]
+    custom_feature_scale = [2, 4, 6, 8, 10]
+    num_clusters = [20, 30, 40, 50, 60, 70]
+    num_iters = [300, 350, 400]
+
+    results_folder_format = 'clustering/max_tfidf_{0}_custom_scale_{1}_num_clusters_{2}_iters_{3}'
+    X_train, X_train_processed, custom_features, text_to_id_dict = load_text(log)
+    for max_features in max_tf_idf_features:
+        for scale in custom_feature_scale:
+            for clusters in num_clusters:
+                for iters in num_iters:
+                    results_folder = results_folder_format.format(max_features, scale, clusters, iters)
+                    if not os.path.exists(results_folder):
+                        os.mkdir(results_folder)
+
+                    k_means_features = prepare_features(log, results_folder, max_features, scale, X_train_processed, custom_features)
+                    k_means_clusters = cluster(log, results_folder, clusters, iters, k_means_features)
+                    gen_cooccurrance_matrix(results_folder, text_to_id_dict, clusters, k_means_clusters, X_train)
+                    log.info("Trial complete...")
+
