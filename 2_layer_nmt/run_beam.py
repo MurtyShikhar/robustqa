@@ -294,7 +294,6 @@ def decode(args: Dict[str, str]):
 
     hypotheses = beam_search(model, test_data_src,
                              beam_size=int(args['--beam-size']),
-                             # beam_size=10,
                              max_decoding_time_step=int(args['--max-decoding-time-step']))
 
     top_hypotheses = [hyps[0] for hyps in hypotheses]
@@ -326,7 +325,6 @@ def translate(args: Dict[str, str]):
 
     hypotheses = beam_search(model, test_data_src,
                              beam_size=int(args['--beam-size']),
-                             # beam_size=10,
                              max_decoding_time_step=int(args['--max-decoding-time-step']))
 
     with open(args['OUTPUT_FILE'], 'w') as f:
