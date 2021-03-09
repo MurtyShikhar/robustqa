@@ -36,7 +36,7 @@ def get_train_test_args():
     # where to store the blank line dropped translated queries and context
     parser.add_argument('--dropped_queries_dir', type=str, default='2_layer_nmt/QA/trans_en_es_queries_beam_5_dropped.txt')
     parser.add_argument('--dropped_context_dir', type=str, default='2_layer_nmt/QA/trans_en_es_context_beam_5_dropped.txt')
-   5
+
      # where to retrieve the back translated queries and context
     parser.add_argument('--back_trans_queries_dir', type=str, default='2_layer_nmt/QA/trans_es_en_queries_beam_5.txt')
     parser.add_argument('--back_trans_context_dir', type=str, default='2_layer_nmt/QA/trans_es_en_context_beam_5.txt')
