@@ -15,6 +15,9 @@ class LanguageCount(FeatureFunction):
             sentence = sentence.strip()
             words = sentence.split()
             for word in words:
-                languages.add(detect(word))
+                try:
+                    languages.add(detect(word))
+                except:
+                    pass
         
         return len(languages)

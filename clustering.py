@@ -6,7 +6,6 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import TruncatedSVD
 from sklearn.preprocessing import normalize
 import matplotlib.pyplot as plt
-import args as args_dependency
 import dataset as ds
 import string
 from typing import List
@@ -15,6 +14,8 @@ import json
 import hashlib
 import pickle
 import os
+
+from util import get_logger
 from args import get_train_test_args
 
 from features.FeatureFunction import FeatureFunction
@@ -39,7 +40,8 @@ CUSTOM_FEATURE_EXTRACTORS: List[FeatureFunction] = [AdjectivePercentage(), AvgSe
                                                     , SentimentAnalysis(), WordVariety()]
 
 
-def extract_custom_features(contexts: List[str]):
+def extract_custom_features(log, contexts: List[str]):
+    log.info(f'Extracting custom features {i}...')
     custom_features = np.zeros((len(contexts), len(CUSTOM_FEATURE_EXTRACTORS)))
     for i in range(len(contexts)):
         for j in range(len(CUSTOM_FEATURE_EXTRACTORS)):
@@ -71,68 +73,78 @@ def normalize_matrix_so_cols_have_zero_mean_unit_variance(mtx: np.ndarray) -> np
     mtx /= np.std(mtx, axis=0).reshape(1, -1)
     return mtx
 
-def get_contexts():
+def get_contexts(log):
     # read data
     data = ['datasets/indomain_train/squad', 'datasets/indomain_train/nat_questions', 'datasets/indomain_train/newsqa'
         ,'datasets/oodomain_train/duorc', 'datasets/oodomain_train/race', 'datasets/oodomain_train/relation_extraction']
 
     all_data = {}
     for i in data:
+        log.info(f'Loading {i}...')
         data_dict = ds.read_squad(i, 'save')
         all_data = ds.merge(data_dict, all_data)
 
     return list(set(all_data['context'])), dict(zip(all_data['context'], all_data['topic_id']))
 
-def read_from_cache():
-    cached_processed = 'save/all_train_text_processed_brynnemh'
+def read_from_cache(log):
+    cached_processed = 'clustering/all_train_text_processed_brynnemh'
     if os.path.exists(cached_processed):
+        log.info("Loading processsed data from cache...")
         return pickle.load(open(cached_processed, 'rb'))
     else:
+        log.info("Saving processsed data in cache...")
         X_train_processed = [' '.join(text_process(item)) for item in X_train]
         pickle.dump(X_train_processed, open(cached_processed, 'wb'))
 
         return X_train_processed
 
 def main(args):
-    args = args_dependency.get_train_test_args()
-
     max_tfidf_features = args["max_tfidf_features"]
     custom_feature_scale = args["custom_feature_scale"]
     num_clusters = args["num_clusters"]
     num_iters = args["kmeans_iters"]
 
-    X_train, text_to_id_dict = get_contexts()
+    results_folder = f'clustering/max_tfidf_{max_tfidf_features}_custom_scale_{custom_feature_scale}_num_clusters_{num_clusters}_iters_{kmeans_iters}'
+    os.mkdir(results_folder)
+    log = util.get_logger(results_folder, 'log_clustering')
+
+    X_train, text_to_id_dict = get_contexts(log)
 
     # get custom features before modifying contexts
-    custom_features = extract_custom_features(X_train)
+    custom_features = extract_custom_features(log, X_train)
 
     #Vectorisation : -
-    X_train_processed = read_from_cache()
+    X_train_processed = read_from_cache(log)
+    log.info("Extracting TF/IDF features...")
     tfidfconvert = TfidfVectorizer(max_features=max_tfidf_features, sublinear_tf=True, max_df=0.7, min_df=0.0001).fit(X_train_processed)
     X_transformed=tfidfconvert.transform(X_train_processed)
-    pickle.dump(tfidfconvert, open("save/tfidf_max07_min00001_2.pickle", "wb"))
-    pickle.dump(X_transformed, open("save/train_text_features_max07_min00001_2.pickle", "wb"))
+    pickle.dump(tfidfconvert, open(f"clustering/tfidf_max07_min00001_2.pickle", "wb"))
+    pickle.dump(X_transformed, open("clustering/train_text_features_max07_min00001_2.pickle", "wb"))
 
+    log.info("Normalizing custom features...")
     custom_features = normalize_matrix_so_cols_have_zero_mean_unit_variance(custom_features)
     custom_features *= 1 / (max_tfidf_features ** 0.5) * custom_feature_scale
 
     # append the custom features for the full feature set
     raw_k_means_features = np.concatenate((X_transformed.toarray(), custom_features), axis=1)
 
+    log.info("Normalizing custom features...")
     # normalize each column to have 0 mean and unit variance
     k_means_features = normalize(raw_k_means_features, axis=1)
-    np.save('save/kmeansfeatures', k_means_features)
+    np.save(f'{results_folder}/kmeansfeatures', k_means_features)
 
     # Cluster the training sentences with K-means technique
+    log.info("Generating clusters with kmeans...")
     km = KMeans(n_clusters=num_clusters, n_init=num_iters)
     modelkmeans20 = km.fit(k_means_features)
 
-    hist, bins = np.histogram(modelkmeans20.labels_, bins=20)
-    print(hist)
+    hist, bins = np.histogram(modelkmeans20.labels_, bins=num_clusters)
+    log.info(f'Kmeans is complete. Histogram: {hist}')
 
     kmeans_dict = {get_hash_str(X_train[idx]): int(label) for idx, label in enumerate(modelkmeans20.labels_)}
 
-    with open('save/topic_id_pair_kmeans20_300', 'w') as f:
+    log.info("Saving kmeans clusters...")
+    with open(f'{results_folder}/topic_id_pair_kmeans_{num_clusters}_{num_iters}', 'w') as f:
         json.dump(kmeans_dict, f)
 
     # Build the matrix with cluster IDs as rows, topic IDs as columns
@@ -145,7 +157,7 @@ def main(args):
     for idx, cluster in enumerate(modelkmeans20.labels_):
         topic_id = int(text_to_id_dict[X_train[idx]])
         co_occurance[topic_id][int(cluster)] += 1
-    np.save(f'save/kmeans_co_occurance_20_300', co_occurance)
+    np.save(f'{results_folder}/kmeans_co_occurance_{num_clusters}_{num_iters}', co_occurance)
 
     '''
     K = range(4,100)
