@@ -5,6 +5,8 @@ from nltk import tokenize
 # python -m spacy download en_core_web_sm
 import spacy
 import sacrebleu
+from py_stringmatching import GeneralizedJaccard
+
 
 # load the module
 nlp = spacy.load('en_core_web_sm')
@@ -80,7 +82,7 @@ def concat_context(context_dir, sample_context_individual_length):
         count += l
     return output_context
 
-def concat_back(backtrans_file):
+def concat(backtrans_file):
     output = []
     f = open(backtrans_file, 'r')
     contents = f.readlines()
@@ -143,3 +145,80 @@ def compute_backtrans_bleu(original_file, backtrans_file):
   preds = [line.strip() for line in pred_file]
   bleu = sacrebleu.corpus_bleu(preds, [refs])
   return bleu.score
+
+def compute_answer_span(context_sent, gold_answer, sim_measure = GeneralizedJaccard):
+    """
+        input:
+            context_sent <string>: the paraphrased sentence which contains the answer before back-translation
+            gold_answer <string>: the answer phrase
+            similarity measure: by default we use generalized jaccard similarity which gives stable performance under misspelling
+        returns:
+            (start_pos, end_pos) <tuple>: stores start and end indices of the estimated answer span in this context sentence
+            target_substring <string>: the estimated answer span
+    """
+
+    context_sent_token = [token.text_with_ws for token in nlp(context_sent)]
+    answer_sent_token = [token.text_with_ws for token in nlp(gold_answer)]
+    n = len(context_sent_token)
+
+    me = sim_measure()
+    best_jac_score = float('-inf')
+    best_substring = ''
+    
+    for i in range(n):
+        for j in range(n-i):
+            substring = ''.join(context_sent_token[i:n-j])
+            current_score = me.get_raw_score(context_sent_token[i:n-j], answer_sent_token)
+            
+            if current_score > best_jac_score:
+                best_jac_score = current_score
+                best_substring = substring
+
+    start_pos = context_sent.find(best_substring)
+    #end_pos = start_pos + len(best_substring)
+    
+    return start_pos, best_substring
+  
+def get_trans_context_answers(context_dir, sample_context_individual_length,
+                              gold_answers, answer_locs, output_context_dir):
+    """
+        input:
+            context_dir <file>: the back translated context file
+            sample_context_individual_length list<integer>: number of sentences in each context
+            gold_answers list<list<string>>: the list of gold answers
+            answer_locs list<list<integer>>: the list of answer locs
+            output_context_dir <file>: concatenated context
+        returns:
+            new_answers: list of new_answers
+    """
+    in_file = open(context_dir, 'r')
+    out_file = open(output_context_dir, 'w')
+
+    num_samples = len(sample_context_individual_length)
+    new_answers = []
+
+    for i in range(num_samples):
+        curr_answers = gold_answers[i]['text']
+        curr_locs = answer_locs[i]
+
+        new_start_idx = []
+        new_curr_answers = []
+        curr_context = ''
+        char_count = 0
+
+        for j in range(sample_context_individual_length[i]):
+            context_sent = in_file.readline().strip()
+
+            for k in range(len(curr_locs)):
+                if j == curr_locs[k]:
+                    start_pos, best_substring = compute_answer_span(context_sent, curr_answers[k])
+                    new_start_idx.append(char_count + start_pos)
+                    new_curr_answers.append(best_substring)
+            
+            curr_context += context_sent + " "
+            char_count += len(context_sent + " ")
+
+        new_answers.append(dict({'answer_start': new_start_idx, 'text': new_curr_answers}))
+        out_file.write(curr_context + '\n')
+
+    return new_answers
