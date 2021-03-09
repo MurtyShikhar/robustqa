@@ -152,7 +152,7 @@ def compute_answer_span(context_sent, gold_answer, sim_measure = GeneralizedJacc
             gold_answer <string>: the answer phrase
             similarity measure: by default we use generalized jaccard similarity which gives stable performance under misspelling
         returns:
-            (start_pos, end_pos) <tuple>: stores start and end indices of the estimated answer span in this context sentence
+            start_pos <int>: stores start index of the estimated answer span in this context sentence
             target_substring <string>: the estimated answer span
     """
 
@@ -174,7 +174,6 @@ def compute_answer_span(context_sent, gold_answer, sim_measure = GeneralizedJacc
                 best_substring = substring
 
     start_pos = context_sent.find(best_substring)
-    #end_pos = start_pos + len(best_substring)
     
     return start_pos, best_substring
   
