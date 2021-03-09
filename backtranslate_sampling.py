@@ -179,6 +179,15 @@ for question, context, qid, answer in zip(backtranslated_queries, backtranslated
     new_data_dict['id'].append(qid)
     new_data_dict['answer'].append(answer)
 
+# test
+for i in range(10):
+    print("========== Augmented example {0} ==========".format(i))
+    print("question:", new_data_dict['question'][i])
+    print("context:", new_data_dict['context'][i])
+    print("id:", new_data_dict['id'][i])
+    print("answer:", new_data_dict['answer'][i])
+
+    
 # new_dataset_dict = dict(dataset_dict)
 
 # for (index, replacement) in zip(sample_idx, backtranslated_queries):
@@ -187,9 +196,9 @@ for question, context, qid, answer in zip(backtranslated_queries, backtranslated
 # for (index, replacement) in zip(sample_idx, backtranslated_context):
 #     new_dataset_dict['context'][index] = replacement
 
-    # for testing purpose can comment out the two lines below and check new_dataset_dict
-    # data_encodings = read_and_process(args, tokenizer, new_dataset_dict, data_dir, dataset_name, split_name)
-    # return util.QADataset(data_encodings, train=(split_name=='train')), dataset_dict
+# for testing purpose can comment out the two lines below and check new_dataset_dict
+# data_encodings = read_and_process(args, tokenizer, new_dataset_dict, data_dir, dataset_name, split_name)
+# return util.QADataset(data_encodings, train=(split_name=='train')), dataset_dict
 
 # if __name__ == '__main__':
 #     args = get_train_test_args()
