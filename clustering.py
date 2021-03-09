@@ -165,6 +165,7 @@ def main(args):
 if __name__ == "__main__":
     nltk.download('stopwords')
     nltk.download('wordnet')
+    nltk.download('punkt')
 
     args = get_train_test_args()
     main(args)
