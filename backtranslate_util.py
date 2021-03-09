@@ -49,9 +49,9 @@ def write_context(context, gold_answers, output_dir, paragraph_dir):
     p = open(paragraph_dir, 'w')
     
     for i in range(len(context)):
-      p.write(context[i])
-      
       out = [(str(sent).encode('ascii', 'ignore')).decode("utf-8").strip() for sent in nlp(context[i].replace('\n', '')).sents if (str(sent).encode('ascii', 'ignore')).decode("utf-8").strip() != '']
+      p.write(' '.join(out) + '\n')
+      
       curr_answers = gold_answers[i]['text']
       curr_locs = [-1] * len(curr_answers)
       
