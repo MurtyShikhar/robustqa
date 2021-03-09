@@ -171,13 +171,21 @@ print('Context back translation BLEU: {}'.format(context_bleu.score))
 # backtranslated_queries = concat_queries(args.back_dropped_queries_dir)
 # backtranslated_context = concat_context(args.backtranslate_context_dir)
 
-new_dataset_dict = dict(dataset_dict)
+new_data_dict = {'question': [], 'context': [], 'id': [], 'answer': []}
 
-for (index, replacement) in zip(sample_idx, backtranslated_queries):
-    new_dataset_dict['question'][index] = replacement
+for question, context, qid, answer in zip(backtranslated_queries, backtranslated_context, sample_idx, new_answers):
+    new_data_dict['question'].append(question)
+    new_data_dict['context'].append(context)
+    new_data_dict['id'].append(qid)
+    new_data_dict['answer'].append(answer)
 
-for (index, replacement) in zip(sample_idx, backtranslated_context):
-    new_dataset_dict['context'][index] = replacement
+# new_dataset_dict = dict(dataset_dict)
+
+# for (index, replacement) in zip(sample_idx, backtranslated_queries):
+#     new_dataset_dict['question'][index] = replacement
+
+# for (index, replacement) in zip(sample_idx, backtranslated_context):
+#     new_dataset_dict['context'][index] = replacement
 
     # for testing purpose can comment out the two lines below and check new_dataset_dict
     # data_encodings = read_and_process(args, tokenizer, new_dataset_dict, data_dir, dataset_name, split_name)
