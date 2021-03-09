@@ -27,6 +27,7 @@ def get_train_test_args():
     # where to save the sampling (with sampling prob) queries and context
     parser.add_argument('--sample_queries_dir', type=str, default='2_layer_nmt/QA/sample_queries.txt')
     parser.add_argument('--sample_context_dir', type=str, default='2_layer_nmt/QA/sample_context.txt')
+    parser.add_argument('--sample_paragraph_dir', type=str, default='2_layer_nmt/QA/sample_paragraph.txt')
     
     # where to retrieve the translated queries and context
     parser.add_argument('--trans_queries_dir', type=str, default='2_layer_nmt/QA/trans_en_es_queries_beam_1.txt')
