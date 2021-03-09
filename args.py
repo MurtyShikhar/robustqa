@@ -30,20 +30,20 @@ def get_train_test_args():
     parser.add_argument('--sample_paragraph_dir', type=str, default='2_layer_nmt/QA/sample_paragraph.txt')
     
     # where to retrieve the translated queries and context
-    parser.add_argument('--trans_queries_dir', type=str, default='2_layer_nmt/QA/trans_en_es_queries_beam_1.txt')
-    parser.add_argument('--trans_context_dir', type=str, default='2_layer_nmt/QA/trans_en_es_context_beam_1.txt')
+    parser.add_argument('--trans_queries_dir', type=str, default='2_layer_nmt/QA/trans_en_es_queries_beam_5.txt')
+    parser.add_argument('--trans_context_dir', type=str, default='2_layer_nmt/QA/trans_en_es_context_beam_5.txt')
     
     # where to store the blank line dropped translated queries and context
-    parser.add_argument('--dropped_queries_dir', type=str, default='2_layer_nmt/QA/trans_en_es_queries_beam_1_dropped.txt')
-    parser.add_argument('--dropped_context_dir', type=str, default='2_layer_nmt/QA/trans_en_es_context_beam_1_dropped.txt')
-    
+    parser.add_argument('--dropped_queries_dir', type=str, default='2_layer_nmt/QA/trans_en_es_queries_beam_5_dropped.txt')
+    parser.add_argument('--dropped_context_dir', type=str, default='2_layer_nmt/QA/trans_en_es_context_beam_5_dropped.txt')
+   5
      # where to retrieve the back translated queries and context
-    parser.add_argument('--back_trans_queries_dir', type=str, default='2_layer_nmt/QA/trans_es_en_queries_beam_1.txt')
-    parser.add_argument('--back_trans_context_dir', type=str, default='2_layer_nmt/QA/trans_es_en_context_beam_1.txt')
+    parser.add_argument('--back_trans_queries_dir', type=str, default='2_layer_nmt/QA/trans_es_en_queries_beam_5.txt')
+    parser.add_argument('--back_trans_context_dir', type=str, default='2_layer_nmt/QA/trans_es_en_context_beam_5.txt')
     
     # where to store the blank line dropped back translated queries and context
-    parser.add_argument('--back_dropped_queries_dir', type=str, default='2_layer_nmt/QA/trans_es_en_queries_beam_1_dropped.txt')
-    parser.add_argument('--back_dropped_context_dir', type=str, default='2_layer_nmt/QA/trans_es_en_context_beam_1_dropped.txt')
+    parser.add_argument('--back_dropped_queries_dir', type=str, default='2_layer_nmt/QA/trans_es_en_queries_beam_5_dropped.txt')
+    parser.add_argument('--back_dropped_context_dir', type=str, default='2_layer_nmt/QA/trans_es_en_context_beam_5_dropped.txt')
     parser.add_argument('--backtranslate_context_dir', type=str, default='2_layer_nmt/QA/backtranslate_context.txt')
     args = parser.parse_args()
     return args
