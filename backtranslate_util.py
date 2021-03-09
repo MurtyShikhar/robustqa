@@ -72,12 +72,14 @@ def concat_context(context_dir, sample_context_individual_length):
     count = 0
     f = open(context_dir, 'r')
     whole_context = f.readlines()
-    for l in sample_context_individual_length:
-        individual_context = whole_context[count:(count+l)]
-        individual_context = [ic.rstrip() for ic in individual_context]
-        individual_context = ' '.join(individual_context)
-        output_context.append(individual_context)
-        count += l
+    for c in whole_context:
+      output_context.append(c)
+#     for l in sample_context_individual_length:
+#         individual_context = whole_context[count:(count+l)]
+#         individual_context = [ic.rstrip() for ic in individual_context]
+#         individual_context = ' '.join(individual_context)
+#         output_context.append(individual_context)
+#         count += l
     return output_context
   
 def get_empty_trans_index(queries_dir, context_dir, sample_context_individual_length,
