@@ -1,8 +1,8 @@
 import re
 import nltk
 
-from nltk_tagger import count_tags
-from FeatureFunction import FeatureFunction
+from features.nltk_tagger import count_tags
+from features.FeatureFunction import FeatureFunction
 
 class NounPercentage(FeatureFunction):
 

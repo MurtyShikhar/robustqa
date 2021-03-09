@@ -2,7 +2,6 @@ import re
 
 from features.FeatureFunction import FeatureFunction
 
-
 class NumberOfAlnums(FeatureFunction):
 
     def __init__(self):

@@ -1,6 +1,6 @@
 import re
 
-from FeatureFunction import FeatureFunction
+from features.FeatureFunction import FeatureFunction
 
 class MinSentenceLen(FeatureFunction):
 

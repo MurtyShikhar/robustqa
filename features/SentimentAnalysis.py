@@ -4,7 +4,7 @@ import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
 import numpy as np
 
-from FeatureFunction import FeatureFunction
+from features.FeatureFunction import FeatureFunction
 
 class SentimentAnalysis(FeatureFunction):
 
