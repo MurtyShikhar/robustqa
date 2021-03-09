@@ -11,8 +11,8 @@ from py_stringmatching import GeneralizedJaccard
 # load the module
 nlp = spacy.load('en_core_web_sm')
 
-def sample_dataset(args, datasets, data_dir, sample_prob = 0.1, seed = 94305,
-                   sample_queries_dir, sample_context_dir, sample_paragraph_dir):
+def sample_dataset(args, datasets, data_dir, sample_queries_dir, sample_context_dir, sample_paragraph_dir, 
+                   sample_prob = 0.1, seed = 94305):
     np.random.seed(seed)
     datasets = datasets.split(',')
     dataset_dict = None
