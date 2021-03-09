@@ -5,6 +5,8 @@ from nltk import tokenize
 # python -m spacy download en_core_web_sm
 import spacy
 import sacrebleu
+from py_stringmatching import GeneralizedJaccard
+
 
 # load the module
 nlp = spacy.load('en_core_web_sm')
