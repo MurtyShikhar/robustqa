@@ -34,16 +34,19 @@ from features.SentimentAnalysis import SentimentAnalysis
 from features.WordVariety import WordVariety
 
 # If we come up with feature extractors we should add them to this list
-CUSTOM_FEATURE_EXTRACTORS: List[FeatureFunction] = [AdjectivePercentage(), AvgSentenceLen(), CoordinatingConjunctionPercentage()
-                                                    , LanguageCount(), MaxSentenceLen(), MaxWordRepetition(), MinSentenceLen()
-                                                    , NounPercentage(), NumberOfAlnums(), NumberOfCommas(), PrepositionPercentage()
+CUSTOM_FEATURE_EXTRACTORS: List[FeatureFunction] = [AvgSentenceLen(), MaxSentenceLen(), MinSentenceLen()
+                                                    , AdjectivePercentage(), CoordinatingConjunctionPercentage()
+                                                    , NounPercentage(), PrepositionPercentage()
+                                                    , MaxWordRepetition()
+                                                    , NumberOfAlnums(), NumberOfCommas()
                                                     , SentimentAnalysis(), WordVariety()]
 
 
 def extract_custom_features(log, contexts: List[str]):
-    log.info(f'Extracting custom features {i}...')
+    log.info(f'Extracting custom features...')
     custom_features = np.zeros((len(contexts), len(CUSTOM_FEATURE_EXTRACTORS)))
     for i in range(len(contexts)):
+        log.info(f'Iteration {i}/{len(contexts)}')
         for j in range(len(CUSTOM_FEATURE_EXTRACTORS)):
             custom_features[i, j] = CUSTOM_FEATURE_EXTRACTORS[j].evaluate(contexts[i])
     return custom_features
@@ -86,7 +89,7 @@ def get_contexts(log):
 
     return list(set(all_data['context'])), dict(zip(all_data['context'], all_data['topic_id']))
 
-def read_from_cache(log):
+def read_from_cache(log, X_train):
     cached_processed = 'clustering/all_train_text_processed_brynnemh'
     if os.path.exists(cached_processed):
         log.info("Loading processsed data from cache...")
@@ -104,9 +107,12 @@ def main(args):
     num_clusters = args["num_clusters"]
     num_iters = args["kmeans_iters"]
 
-    results_folder = f'clustering/max_tfidf_{max_tfidf_features}_custom_scale_{custom_feature_scale}_num_clusters_{num_clusters}_iters_{kmeans_iters}'
-    os.mkdir(results_folder)
-    log = util.get_logger(results_folder, 'log_clustering')
+    if not os.path.exists("clustering"):
+        os.makedirs("clustering")
+    results_folder = f'clustering/max_tfidf_{max_tfidf_features}_custom_scale_{custom_feature_scale}_num_clusters_{num_clusters}_iters_{num_iters}'
+    if not os.path.exists(results_folder):
+        os.mkdir(results_folder)
+    log = get_logger(results_folder, 'log_clustering')
 
     X_train, text_to_id_dict = get_contexts(log)
 
@@ -114,7 +120,7 @@ def main(args):
     custom_features = extract_custom_features(log, X_train)
 
     #Vectorisation : -
-    X_train_processed = read_from_cache(log)
+    X_train_processed = read_from_cache(log, X_train)
     log.info("Extracting TF/IDF features...")
     tfidfconvert = TfidfVectorizer(max_features=max_tfidf_features, sublinear_tf=True, max_df=0.7, min_df=0.0001).fit(X_train_processed)
     X_transformed=tfidfconvert.transform(X_train_processed)
