@@ -10,4 +10,4 @@ class MinSentenceLen(FeatureFunction):
     def evaluate(self, context: str) -> float:
         sentences = re.split("\.|!|\?", context)
         min_sentence = min(sentences, key=len)
-        return len(min_sentence.split())
+        return max(len(min_sentence.split()), 1)

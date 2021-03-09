@@ -44,12 +44,23 @@ CUSTOM_FEATURE_EXTRACTORS: List[FeatureFunction] = [AvgSentenceLen(), MaxSentenc
 
 def extract_custom_features(log, contexts: List[str]):
     log.info(f'Extracting custom features...')
-    custom_features = np.zeros((len(contexts), len(CUSTOM_FEATURE_EXTRACTORS)))
-    for i in range(len(contexts)):
-        log.info(f'Iteration {i}/{len(contexts)}')
-        for j in range(len(CUSTOM_FEATURE_EXTRACTORS)):
-            custom_features[i, j] = CUSTOM_FEATURE_EXTRACTORS[j].evaluate(contexts[i])
-    return custom_features
+    cached_custom_features = 'clustering/all_custom_features'
+    if os.path.exists(cached_custom_features):
+        log.info("Loading custom features from cache...")
+        return pickle.load(open(cached_custom_features, 'rb'))
+    else:
+        log.info("Saving custom features in cache...")
+        custom_features = np.zeros((len(contexts), len(CUSTOM_FEATURE_EXTRACTORS)))
+        for i in range(len(contexts)):
+            if i % 100 == 0:
+                log.info(f'Iteration {i}/{len(contexts)}')
+            for j in range(len(CUSTOM_FEATURE_EXTRACTORS)):
+                value = CUSTOM_FEATURE_EXTRACTORS[j].evaluate(contexts[i])
+                print(j, value)
+                custom_features[i, j] = value
+
+        pickle.dump(custom_features, open(cached_custom_features, 'wb'))
+        return custom_features
 
 #Text pre-processing
 def text_process(text):
@@ -78,8 +89,9 @@ def normalize_matrix_so_cols_have_zero_mean_unit_variance(mtx: np.ndarray) -> np
 
 def get_contexts(log):
     # read data
-    data = ['datasets/indomain_train/squad', 'datasets/indomain_train/nat_questions', 'datasets/indomain_train/newsqa'
-        ,'datasets/oodomain_train/duorc', 'datasets/oodomain_train/race', 'datasets/oodomain_train/relation_extraction']
+    data = ['datasets/indomain_train/newsqa_subset']
+    # data = ['datasets/indomain_train/squad', 'datasets/indomain_train/nat_questions', 'datasets/indomain_train/newsqa'
+        # ,'datasets/oodomain_train/duorc', 'datasets/oodomain_train/race', 'datasets/oodomain_train/relation_extraction']
 
     all_data = {}
     for i in data:
@@ -92,10 +104,10 @@ def get_contexts(log):
 def read_from_cache(log, X_train):
     cached_processed = 'clustering/all_train_text_processed_brynnemh'
     if os.path.exists(cached_processed):
-        log.info("Loading processsed data from cache...")
+        log.info("Loading processed data from cache...")
         return pickle.load(open(cached_processed, 'rb'))
     else:
-        log.info("Saving processsed data in cache...")
+        log.info("Saving processed data in cache...")
         X_train_processed = [' '.join(text_process(item)) for item in X_train]
         pickle.dump(X_train_processed, open(cached_processed, 'wb'))
 
