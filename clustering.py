@@ -156,12 +156,12 @@ def cluster(log, results_folder, num_clusters, num_iters, k_means_features):
     log.info(f'Kmeans biggest cluster / smallest cluster:  {max(cluster_sizes)} / {min(cluster_sizes)} = {max(cluster_sizes) / min(cluster_sizes)}')
 
     log.info(f"Saving kmeans clusters in {results_folder}/kmeans_clusters.json...")
-    with open(f'{results_folder}/kmeans_clusters.json', 'w') as f:
+    with open(f'{results_folder}/kmeans_clusters_clusters_{num_clusters}_iters_{num_iters}.json', 'w') as f:
         json.dump(kmeans_dict, f, indent=2)
 
-    return clusters
+    return clusters, clusters.inertia_
 
-def gen_cooccurrance_matrix(results_folder, text_to_id_dict, num_clusters, clusters, X_train):
+def gen_cooccurrance_matrix(results_folder, text_to_id_dict, num_clusters, num_iters, clusters, X_train):
     # Build the matrix with cluster IDs as rows, topic IDs as columns
     topics_id = []
     for k, v in text_to_id_dict.items():
@@ -172,23 +172,8 @@ def gen_cooccurrance_matrix(results_folder, text_to_id_dict, num_clusters, clust
     for idx, cluster in enumerate(clusters.labels_):
         topic_id = int(text_to_id_dict[X_train[idx]])
         co_occurance[int(cluster)][topic_id] += 1
-    np.savetxt(f'{results_folder}/kmeans_co_occurance.csv', co_occurance
+    np.savetxt(f'{results_folder}/kmeans_cooccurrence_clusters_{num_clusters}_iters_{num_iters}.csv', co_occurance
         , delimiter=',', header=','.join(topics_id), fmt="%d")
-
-    '''
-    K = range(4,100)
-    Sum_of_squared_distances = []
-    for k in K:
-        km = KMeans(n_clusters=k)
-        km = km.fit(k_means_features)
-        Sum_of_squared_distances.append(km.inertia_)
-
-    plt.plot(K, Sum_of_squared_distances, 'bx-')
-    plt.xlabel('k')
-    plt.ylabel('Sum_of_squared_distances')
-    plt.title('Elbow Method For Optimal k')
-    plt.show()
-    '''
 
 if __name__ == "__main__":
     nltk.download('stopwords')
@@ -201,22 +186,32 @@ if __name__ == "__main__":
 
     max_tf_idf_features = [100, 200, 300]
     custom_feature_scale = [2, 4, 6, 8, 10]
-    num_clusters = [20, 30, 40, 50, 60, 70]
-    num_iters = [300, 350, 400]
+    clusters = [20, 30, 40, 50, 60, 70]
+    iters = [300, 350, 400]
 
-    results_folder_format = 'clustering/max_tfidf_{0}_custom_scale_{1}_num_clusters_{2}_iters_{3}'
+    results_folder_format = 'clustering/max_tfidf_{0}_custom_scale_{1}'
     X_train, X_train_processed, custom_features, text_to_id_dict = load_text(log)
     for max_features in max_tf_idf_features:
         for scale in custom_feature_scale:
             k_means_features = prepare_features(log, max_features, scale, X_train_processed, custom_features)
 
-            for clusters in num_clusters:
-                for iters in num_iters:
-                    results_folder = results_folder_format.format(max_features, scale, clusters, iters)
+            for num_iters in iters:
+                sum_of_squared_distances = []
+                for num_clusters in clusters:
+                    results_folder = results_folder_format.format(max_features, scale)
                     if not os.path.exists(results_folder):
                         os.mkdir(results_folder)
 
-                    k_means_clusters = cluster(log, results_folder, clusters, iters, k_means_features)
-                    gen_cooccurrance_matrix(results_folder, text_to_id_dict, clusters, k_means_clusters, X_train)
-                    log.info("Trial complete...")
+                    k_means_clusters, inertia = cluster(log, results_folder, num_clusters, num_iters, k_means_features)
+                    sum_of_squared_distances.append(inertia)
+                    gen_cooccurrance_matrix(results_folder, text_to_id_dict, num_clusters, num_iters, k_means_clusters, X_train)
+                    
+                plt.clf()
+                plt.plot(clusters, sum_of_squared_distances, 'bx-')
+                plt.xlabel('K')
+                plt.ylabel('sum of squared distances')
+                plt.title('Elbow Method For Optimal K')
+                plt.savefig(f'{results_folder}/elbow_iters_{num_iters}.png')
+                
+                log.info("Trial complete...")
 
