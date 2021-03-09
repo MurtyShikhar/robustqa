@@ -1,4 +1,3 @@
-
 class FeatureFunction:
     """This is an abstract base class for an object that evaluates context paragraphs."""
 
