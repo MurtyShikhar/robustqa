@@ -90,7 +90,7 @@ def concat(backtrans_file):
         output.append(elem)
     return output
  
-def get_empty_trans_index(queries_dir, context_dir, sample_context_individual_length,
+def get_keep_index(queries_dir, context_dir, sample_context_individual_length,
                       output_queries_dir, output_context_dir):
     q_file = open(queries_dir, 'r')
     c_file = open(context_dir, 'r')
@@ -124,17 +124,17 @@ def get_empty_trans_index(queries_dir, context_dir, sample_context_individual_le
           
     return keep_index
   
-def drop_empty_trans(queries_dir, context_dir, sample_context_individual_length,
-                      output_queries_dir, output_context_dir, process_lists):
-    drop_index = get_empty_trans_index(queries_dir, context_dir, sample_context_individual_length,
-                                       output_queries_dir, output_context_dir)
-    dropped_lists = []
+# def drop_empty_trans(queries_dir, context_dir, sample_context_individual_length,
+#                       output_queries_dir, output_context_dir, process_lists):
+#     drop_index = get_empty_trans_index(queries_dir, context_dir, sample_context_individual_length,
+#                                        output_queries_dir, output_context_dir)
+#     dropped_lists = []
 
-    for l in process_lists:
-      new_l = [elem for idx, elem in enumerate(l) if idx not in drop_index]
-      dropped_lists.append(new_l)
+#     for l in process_lists:
+#       new_l = [elem for idx, elem in enumerate(l) if idx not in drop_index]
+#       dropped_lists.append(new_l)
     
-    return dropped_lists
+#     return dropped_lists
 
 def compute_backtrans_bleu(original_file, backtrans_file):
   ref_file = open(original_file, 'r')
