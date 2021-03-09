@@ -120,9 +120,9 @@ from transformers import DistilBertTokenizerFast
     # for testing purpose can de-function the code and uncomment the line below
 args = get_train_test_args() 
 dataset_dict, sample_idx, sample_context_individual_length, gold_answers, answer_locs = sample_dataset(args, args.train_datasets, args.train_dir,
-                                                                                                       args.sample_prob, args.seed,
                                                                                                        args.sample_queries_dir, args.sample_context_dir, 
-                                                                                                       args.sample_paragraph_dir)
+                                                                                                       args.sample_paragraph_dir, 
+                                                                                                       args.sample_prob, args.seed)
 
 print('Sampled queries are being saved at:', args.sample_queries_dir)         
 print('Sampled context are being saved at:', args.sample_context_dir)
