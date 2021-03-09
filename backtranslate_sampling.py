@@ -1,6 +1,6 @@
 from args import get_train_test_args
 import argparse
-from backtranslate_util import sample_dataset, concat_context, concat_queries, get_empty_trans_index, drop_empty_trans, compute_backtrans_bleu, get_trans_context_answers, concat
+from backtranslate_util import sample_dataset, get_keep_index, clean_lists, get_trans_context_answers, concat, clean_sample_files
 import util
 from transformers import DistilBertTokenizerFast
 
@@ -121,34 +121,52 @@ from transformers import DistilBertTokenizerFast
 args = get_train_test_args() 
 dataset_dict, sample_idx, sample_context_individual_length, gold_answers, answer_locs = sample_dataset(args, args.train_datasets, args.train_dir,
                                                                                                        args.sample_prob, args.seed,
-                                                                                                       args.sample_queries_dir, args.sample_context_dir)
+                                                                                                       args.sample_queries_dir, args.sample_context_dir, 
+                                                                                                       args.sample_paragraph_dir)
 
 print('Sampled queries are being saved at:', args.sample_queries_dir)         
 print('Sampled context are being saved at:', args.sample_context_dir)
+print('Sampled paragraph are being saved at:', args.sample_paragraph_dir)
 print('Num of examples sampled:', len(sample_idx))
 
-[sample_idx, sample_context_individual_length, gold_answers, answer_locs] = drop_empty_trans(args.trans_queries_dir, args.trans_context_dir, sample_context_individual_length,
-                                                                             args.dropped_queries_dir, args.dropped_context_dir, 
-                                                                             [sample_idx, sample_context_individual_length, gold_answers, answer_locs])
+keep_index_1 = get_keep_index(args.trans_queries_dir, args.trans_context_dir, sample_context_individual_length,
+                              args.dropped_queries_dir, args.dropped_context_dir)
+sample_idx, sample_context_individual_length, gold_answers, answer_locs = clean_lists(keep_index_1, [sample_idx, sample_context_individual_length, gold_answers, answer_locs])
 print('Num of non-empty examples after translation:', len(sample_idx))
 
+# [sample_idx, sample_context_individual_length, gold_answers, answer_locs] = drop_empty_trans(args.trans_queries_dir, args.trans_context_dir, sample_context_individual_length,
+#                                                                              args.dropped_queries_dir, args.dropped_context_dir, 
+#                                                                              [sample_idx, sample_context_individual_length, gold_answers, answer_locs])
 
-[sample_idx, sample_context_individual_length, gold_answers, answer_locs] = drop_empty_trans(args.back_trans_queries_dir, args.back_trans_context_dir, sample_context_individual_length,
-                                                                             args.back_dropped_queries_dir, args.back_dropped_context_dir, 
-                                                                             [sample_idx, sample_context_individual_length, gold_answers, answer_locs])
-print('Num of non-empty examples after back translation:', len(sample_idx))
+keep_index_2 = get_keep_index(args.back_trans_queries_dir, args.back_trans_context_dir, sample_context_individual_length,
+                              args.back_dropped_queries_dir, args.back_dropped_context_dir)
+sample_idx, sample_context_individual_length, gold_answers, answer_locs = clean_lists(keep_index_2, [sample_idx, sample_context_individual_length, gold_answers, answer_locs])
+print('Num of non-empty examples after translation:', len(sample_idx))
+
+keep_index = [elem for idx, elem in enumerate(keep_index_1) if idx in keep_index_2]
+
+# [sample_idx, sample_context_individual_length, gold_answers, answer_locs] = drop_empty_trans(args.back_trans_queries_dir, args.back_trans_context_dir, sample_context_individual_length,
+#                                                                              args.back_dropped_queries_dir, args.back_dropped_context_dir, 
+#                                                                              [sample_idx, sample_context_individual_length, gold_answers, answer_locs])
 
 new_answers = get_trans_context_answers(args.back_dropped_context_dir, sample_context_individual_length, 
                                         gold_answers, answer_locs, args.backtranslate_context_dir)
-
 backtranslated_queries = concat(args.back_dropped_queries_dir)
 backtranslated_context = concat(args.backtranslate_context_dir)
+print('Num of backtranslated queries:', len(backtranslated_queries)
+print('Num of backtranslated context:', len(backtranslated_context)
+print('Num of new answers:', len(new_answers)
 
-queries_bleu = compute_backtrans_bleu(args.sample_queries_dir, args.back_dropped_queries_dir)
-print('Queries back translation BLEU: {}'.format(queries_bleu))
+clean_sample_queries, clean_sample_paragraph = clean_sample_files(keep_index, args.sample_queries_dir, args.sample_paragraph_dir)
+queries_bleu = sacrebleu.corpus_bleu(backtranslated_queries, [clean_sample_queries])
+print('Queries back translation BLEU: {}'.format(queries_bleu.score))
+# queries_bleu = compute_backtrans_bleu(args.back_dropped_queries_dir, args.sample_queries_dir)
+# print('Queries back translation BLEU: {}'.format(queries_bleu))
 
-context_bleu = compute_backtrans_bleu(args.sample_context_dir, args.backtranslate_context_dir)
-print('Context back translation BLEU: {}'.format(context_bleu))
+context_bleu = sacrebleu.corpus_bleu(backtranslated_context, [clean_sample_paragraph])
+print('Context back translation BLEU: {}'.format(context_bleu.score))
+# context_bleu = compute_backtrans_bleu(args.backtranslate_context_dir, args.sample_context_dir)
+# print('Context back translation BLEU: {}'.format(context_bleu))
 
 # backtranslated_queries = concat_queries(args.back_dropped_queries_dir)
 # backtranslated_context = concat_context(args.backtranslate_context_dir)
