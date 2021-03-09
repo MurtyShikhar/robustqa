@@ -1,20 +1,20 @@
 import re
+from langdetect import detect
 
 from features.FeatureFunction import FeatureFunction
 
-class AvgSentenceLen(FeatureFunction):
+class LanguageCount(FeatureFunction):
 
     def __init__(self):
         super().__init__()
 
     def evaluate(self, context: str) -> float:
         sentences = re.split("\.|!|\?", context)
-        num_words = 0
-        num_sentences = 0
+        languages = set()
         for sentence in sentences:
             sentence = sentence.strip()
-            if len(sentence) == 0:
-                continue
-            num_words += len(sentence.split())
-            num_sentences += 1
-        return num_words/num_sentences
+            words = sentence.split()
+            for word in words:
+                languages.add(detect(word))
+        
+        return len(languages)
