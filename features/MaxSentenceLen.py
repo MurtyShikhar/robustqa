@@ -1,6 +1,6 @@
 import re
 
-from features.FeatureFunction import FeatureFunction
+from FeatureFunction import FeatureFunction
 
 class MaxSentenceLen(FeatureFunction):
 
@@ -9,5 +9,5 @@ class MaxSentenceLen(FeatureFunction):
 
     def evaluate(self, context: str) -> float:
         sentences = re.split("\.|!|\?", context)
-        max_sentence = list(max(sentences, key=len))
-        return len(max_sentence)
+        max_sentence = max(sentences, key=len)
+        return len(max_sentence.split())

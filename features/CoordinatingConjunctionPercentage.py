@@ -1,12 +1,14 @@
 import re
-from nltk_tagger import count_tags
+import nltk
 
-from features.FeatureFunction import FeatureFunction
+from nltk_tagger import count_tags
+from FeatureFunction import FeatureFunction
 
 class CoordinatingConjunctionPercentage(FeatureFunction):
 
     def __init__(self):
+        nltk.download('averaged_perceptron_tagger')
         super().__init__()
 
     def evaluate(self, context: str) -> float:
-        return count_tags(context, 'CC') / len(context.split())
+        return count_tags(context, ['CC']) / len(context.split())

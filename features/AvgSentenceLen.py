@@ -1,6 +1,6 @@
 import re
 
-from features.FeatureFunction import FeatureFunction
+from FeatureFunction import FeatureFunction
 
 class AvgSentenceLen(FeatureFunction):
 

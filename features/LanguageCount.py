@@ -1,7 +1,7 @@
 import re
 from langdetect import detect
 
-from features.FeatureFunction import FeatureFunction
+from FeatureFunction import FeatureFunction
 
 class LanguageCount(FeatureFunction):
 

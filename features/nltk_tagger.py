@@ -3,8 +3,6 @@ from collections import Counter
 
 # list of tags: https://pythonprogramming.net/natural-language-toolkit-nltk-part-speech-tagging/
 def count_tags(context, tags):
-    nltk.download('averaged_perceptron_tagger')
-
     tokens = nltk.word_tokenize(context.lower())
     text = nltk.Text(tokens)
     tags = nltk.pos_tag(text)
