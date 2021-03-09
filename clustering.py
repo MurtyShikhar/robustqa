@@ -87,9 +87,9 @@ def normalize_matrix_so_cols_have_zero_mean_unit_variance(mtx: np.ndarray) -> np
 
 def get_contexts(log):
     # read data
-    data =['datasets/indomain_train/newsqa_subset']
-    # data = ['datasets/indomain_train/squad', 'datasets/indomain_train/nat_questions', 'datasets/indomain_train/newsqa'
-    #     ,'datasets/oodomain_train/duorc', 'datasets/oodomain_train/race', 'datasets/oodomain_train/relation_extraction']
+    # data =['datasets/indomain_train/newsqa_subset']
+    data = ['datasets/indomain_train/squad', 'datasets/indomain_train/nat_questions', 'datasets/indomain_train/newsqa'
+        ,'datasets/oodomain_train/duorc', 'datasets/oodomain_train/race', 'datasets/oodomain_train/relation_extraction']
 
     all_data = {}
     for i in data:
