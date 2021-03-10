@@ -171,7 +171,7 @@ def compute_answer_span(context_sent, gold_answer, sim_measure = GeneralizedJacc
             
             if current_score > best_jac_score:
                 best_jac_score = current_score
-                best_substring = substring
+                best_substring = substring.strip()
 
     start_pos = context_sent.find(best_substring)
     
