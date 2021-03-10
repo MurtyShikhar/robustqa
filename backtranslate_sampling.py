@@ -2,6 +2,7 @@ from args import get_train_test_args
 import argparse
 from backtranslate_util import sample_dataset, get_keep_index, clean_lists, get_trans_context_answers, concat, clean_sample_files
 import util
+import sacrebleu
 from transformers import DistilBertTokenizerFast
 
 # def prepare_eval_data(dataset_dict, tokenizer):
