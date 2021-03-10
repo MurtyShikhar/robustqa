@@ -155,6 +155,7 @@ backtranslated_queries = concat(args.back_dropped_queries_dir)
 backtranslated_context = concat(args.backtranslate_context_dir)
 print('Num of backtranslated queries:', len(backtranslated_queries))
 print('Num of backtranslated context:', len(backtranslated_context))
+print('Num of augmented samples:', len(sample_idx))
 print('Num of new answers:', len(new_answers))
 
 clean_sample_queries, clean_sample_paragraph = clean_sample_files(keep_index, args.sample_queries_dir, args.sample_paragraph_dir)
