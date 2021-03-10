@@ -103,13 +103,13 @@ def get_keep_index(queries_dir, context_dir, sample_context_individual_length,
       drop = False
       q = q_file.readline()
       
-      if q == '\n':
+      if q.strip() == '':
         drop = True
       else:
         context = []
         for j in range(sample_context_individual_length[i]):
           c = c_file.readline()
-          if c == '\n':
+          if c.strip() == '':
             drop = True
             break
           else:
