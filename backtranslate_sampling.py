@@ -154,7 +154,7 @@ context_bleu = sacrebleu.corpus_bleu(concat(args.back_dropped_context_dir), [sam
 print('Context back translation BLEU: {}'.format(context_bleu.score))
 
 backtranslated_queries = concat(args.back_dropped_queries_dir)
-backtranslated_context = concat_context(args.backtranslate_context_dir, dropped_context_individual_length)
+backtranslated_context = concat_context(args.back_dropped_context_dir, dropped_context_individual_length)
 print('Num of backtranslated queries:', len(backtranslated_queries))
 print('Num of backtranslated context:', len(backtranslated_context))
 print('Num of augmented samples:', len(sample_idx))
