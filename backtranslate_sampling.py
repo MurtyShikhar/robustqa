@@ -119,7 +119,8 @@ from transformers import DistilBertTokenizerFast
 
 #def get_sampling_dataset(args, datasets, data_dir, tokenizer, split_name):
     # for testing purpose can de-function the code and uncomment the line below
-args = get_train_test_args() 
+args = get_train_test_args()
+# sampling
 dataset_dict, sample_idx, sample_context_individual_length, gold_answers, answer_locs = sample_dataset(args, args.train_datasets, args.train_dir,
                                                                                                        args.sample_queries_dir, args.sample_context_dir, 
                                                                                                        args.sample_prob, args.seed)
@@ -129,45 +130,46 @@ print('Sampled queries are being saved at:', args.sample_queries_dir)
 print('Sampled context are being saved at:', args.sample_context_dir)
 print('Num of examples sampled:', len(sample_idx))
 
-
-
+# forward translation
 keep_index_1 = get_keep_index(args.trans_queries_dir, args.trans_context_dir, sample_context_individual_length,
                               args.dropped_queries_dir, args.dropped_context_dir)
 sample_idx, dropped_context_individual_length, gold_answers, answer_locs = clean_lists(keep_index_1, [sample_idx, sample_context_individual_length, gold_answers, answer_locs])
 print('Num of non-empty examples after translation:', len(sample_idx))
 
+# back translation
 keep_index_2 = get_keep_index(args.back_trans_queries_dir, args.back_trans_context_dir, dropped_context_individual_length,
                               args.back_dropped_queries_dir, args.back_dropped_context_dir)
 sample_idx, dropped_context_individual_length, gold_answers, answer_locs = clean_lists(keep_index_2, [sample_idx, dropped_context_individual_length, gold_answers, answer_locs])
 print('Num of non-empty examples after translation:', len(sample_idx))
 
-keep_index = [elem for idx, elem in enumerate(keep_index_1) if idx in keep_index_2]
-
+# estimate new answers
 new_answers = get_trans_context_answers(args.back_dropped_context_dir, dropped_context_individual_length, 
-                                        gold_answers, answer_locs) #args.backtranslate_context_dir
+                                        gold_answers, answer_locs)
 
+# compute queries and context BLEU
+keep_index = [elem for idx, elem in enumerate(keep_index_1) if idx in keep_index_2]
 sample_queries, sample_context = clean_sample_files(keep_index, args.sample_queries_dir, args.sample_context_dir, sample_context_individual_length)
 queries_bleu = sacrebleu.corpus_bleu(concat(args.back_dropped_queries_dir), [sample_queries])
 print('Queries back translation BLEU: {}'.format(queries_bleu.score))
-
 context_bleu = sacrebleu.corpus_bleu(concat(args.back_dropped_context_dir), [sample_context])
 print('Context back translation BLEU: {}'.format(context_bleu.score))
 
+# create augmented dataset
 backtranslated_queries = concat(args.back_dropped_queries_dir)
 backtranslated_context = concat_context(args.back_dropped_context_dir, dropped_context_individual_length)
-print('Num of backtranslated queries:', len(backtranslated_queries))
-print('Num of backtranslated context:', len(backtranslated_context))
-print('Num of augmented samples:', len(sample_idx))
-print('Num of new answers:', len(new_answers))
 
 new_data_dict = {'question': [], 'context': [], 'id': [], 'answer': []}
-
 for question, context, qid, answer in zip(backtranslated_queries, backtranslated_context, sample_idx, new_answers):
     new_data_dict['question'].append(question)
     new_data_dict['context'].append(context)
     new_data_dict['id'].append(qid)
     new_data_dict['answer'].append(answer)
 
+print('Num of backtranslated queries:', len(backtranslated_queries))
+print('Num of backtranslated context:', len(backtranslated_context))
+print('Num of augmented samples:', len(sample_idx))
+print('Num of new answers:', len(new_answers))
+    
 # test
 for i in range(10):
     print("========== Augmented example {0} ==========".format(i))
