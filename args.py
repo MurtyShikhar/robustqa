@@ -48,5 +48,6 @@ def get_train_test_args():
     
     # where to store augmented dataset
     parser.add_argument('--aug_dataset_dict', type=str, default='augmented_dataset_beam_5.json')
+    parser.add_argument('--aug_dataset_pickle', type=str, default='augmented_dataset_beam_5.pickle')
     args = parser.parse_args()
     return args
