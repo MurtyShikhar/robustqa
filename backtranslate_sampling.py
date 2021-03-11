@@ -190,8 +190,8 @@ def gen_augmented_dataset(args, mode='nmt'):
 # return util.QADataset(data_encodings, train=(split_name=='train')), dataset_dict
 
 if __name__ == '__main__':
-#     args = get_nmt_args(beam=1)
-    args = get_nmt_args(beam=5)
+    args = get_nmt_args(beam=1)
+#    args = get_nmt_args(beam=5)
     gen_augmented_dataset(args)
 #     tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
 #     output = get_sampling_dataset(args, args.train_datasets, args.train_dir, tokenizer, 'train')
