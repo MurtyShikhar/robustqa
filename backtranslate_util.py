@@ -263,7 +263,8 @@ def clean_sample_files(keep_index, queries_dir, context_dir, sample_context_indi
       context_sent = f.readline().strip()
       if i in keep_index:
         sample_context.append(context_sent)
-
+  
+  f.close()
   return sample_queries, sample_context
 
 # def compute_backtrans_bleu(preds, refs):
