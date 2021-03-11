@@ -251,11 +251,15 @@ def concat_context(context_dir, sample_context_individual_length):
     f.close()
     return output_context
   
-def clean_sample_files(keep_index, queries_dir, context_dir, sample_context_individual_length):
+def clean_sample_files(keep_index, queries_dir, context_dir, dropped_context_dir, sample_context_individual_length):
   sample_queries = [elem for idx, elem in enumerate(concat(queries_dir)) if idx in keep_index]
   sample_context = []
   
   f = open(context_dir, 'r')
+  
+  # for sanity check bleu score
+  new_f = open(dropped_context_dir, 'w')
+  
   num_samples = len(sample_context_individual_length)
 
   for i in range(num_samples):
@@ -263,8 +267,12 @@ def clean_sample_files(keep_index, queries_dir, context_dir, sample_context_indi
       context_sent = f.readline().strip()
       if i in keep_index:
         sample_context.append(context_sent)
+        
+        # for sanity check bleu score
+        new_f.write(context_sent + '\n')
   
   f.close()
+  new_f.close()
   return sample_queries, sample_context
 
 # def compute_backtrans_bleu(preds, refs):
