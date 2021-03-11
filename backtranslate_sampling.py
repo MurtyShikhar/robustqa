@@ -171,7 +171,7 @@ def gen_augmented_dataset(args, mode='nmt'):
     print('Num of augmented samples:', len(sample_idx))
     print('Num of new answers:', len(new_answers))
     
-# test
+    # test
     for i in range(10):
         print("========== Augmented example {0} ==========".format(i))
         print("question:", new_data_dict['question'][i])
@@ -190,6 +190,7 @@ def gen_augmented_dataset(args, mode='nmt'):
 # return util.QADataset(data_encodings, train=(split_name=='train')), dataset_dict
 
 if __name__ == '__main__':
+#     args = get_nmt_args(beam=1)
     args = get_nmt_args(beam=5)
     gen_augmented_dataset(args)
 #     tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
