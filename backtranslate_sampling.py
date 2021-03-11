@@ -158,9 +158,10 @@ print('Context back translation BLEU: {}'.format(context_bleu.score))
 # create augmented dataset
 backtranslated_queries = concat(args.back_dropped_queries_dir)
 backtranslated_context = concat_context(args.back_dropped_context_dir, dropped_context_individual_length)
+qids = ['augbeam5num'+ str(x) for x in sample_idx]
 
 new_data_dict = {'question': [], 'context': [], 'id': [], 'answer': []}
-for question, context, qid, answer in zip(backtranslated_queries, backtranslated_context, sample_idx, new_answers):
+for question, context, qid, answer in zip(backtranslated_queries, backtranslated_context, qids, new_answers):
     new_data_dict['question'].append(question)
     new_data_dict['context'].append(context)
     new_data_dict['id'].append(qid)
