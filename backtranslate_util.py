@@ -11,7 +11,7 @@ from py_stringmatching import GeneralizedJaccard
 # load the module
 nlp = spacy.load('en_core_web_sm')
 
-def sample_dataset(args, datasets, data_dir, sample_queries_dir, sample_context_dir, sample_paragraph_dir, 
+def sample_dataset(args, datasets, data_dir, sample_queries_dir, sample_context_dir,
                    sample_prob = 0.1, seed = 94305):
     np.random.seed(seed)
     datasets = datasets.split(',')
@@ -29,7 +29,7 @@ def sample_dataset(args, datasets, data_dir, sample_queries_dir, sample_context_
     gold_answers = [dataset_dict['answer'][i] for i in sample_idx]
     
     write_queries(sample_queries, sample_queries_dir)
-    sample_context_individual_length, answer_locs = write_context(sample_context, gold_answers, sample_context_dir, sample_paragraph_dir)
+    sample_context_individual_length, answer_locs = write_context(sample_context, gold_answers, sample_context_dir)
         
     return dataset_dict, sample_idx, sample_context_individual_length, gold_answers, answer_locs
     
@@ -41,16 +41,14 @@ def write_queries(queries, output_dir):
             q += '?'
           f.write(q + '\n')
 
-def write_context(context, gold_answers, output_dir, paragraph_dir):
+def write_context(context, gold_answers, output_dir):
     out_lengths = []
     answer_locs = []
     
     f = open(output_dir, 'w')
-    p = open(paragraph_dir, 'w')
     
     for i in range(len(context)):
       out = [(str(sent).encode('ascii', 'ignore')).decode("utf-8").strip() for sent in nlp(context[i].replace('\n', '')).sents if (str(sent).encode('ascii', 'ignore')).decode("utf-8").strip() != '']
-      p.write(' '.join(out) + '\n')
       
       curr_answers = gold_answers[i]['text']
       curr_locs = [-1] * len(curr_answers)
@@ -65,32 +63,10 @@ def write_context(context, gold_answers, output_dir, paragraph_dir):
       answer_locs.append(curr_locs)
     
     f.close()
-    p.close()
     return out_lengths, answer_locs
-
-# def concat_queries(queries_dir):
-#     output_queries = []
-#     f = open(queries_dir, 'r')
-#     whole_queries = f.readlines()
-#     for q in whole_queries:
-#         output_queries.append(q)
-#     return output_queries
-    
-# def concat_context(context_dir, sample_context_individual_length):
-#     output_context = []
-#     count = 0
-#     f = open(context_dir, 'r')
-#     whole_context = f.readlines()
-#     for l in sample_context_individual_length:
-#         individual_context = whole_context[count:(count+l)]
-#         individual_context = [ic.rstrip() for ic in individual_context]
-#         individual_context = ' '.join(individual_context)
-#         output_context.append(individual_context)
-#         count += l
-#     return output_context
  
 def get_keep_index(queries_dir, context_dir, sample_context_individual_length,
-                      output_queries_dir, output_context_dir):
+                   output_queries_dir, output_context_dir):
     q_file = open(queries_dir, 'r')
     c_file = open(context_dir, 'r')
     output_q_file = open(output_queries_dir, 'w')
@@ -133,18 +109,6 @@ def clean_lists(keep_index, process_lists):
       cleaned_lists.append([elem for idx, elem in enumerate(l) if idx in keep_index])
     return cleaned_lists
 
-# def drop_empty_trans(queries_dir, context_dir, sample_context_individual_length,
-#                       output_queries_dir, output_context_dir, process_lists):
-#     drop_index = get_empty_trans_index(queries_dir, context_dir, sample_context_individual_length,
-#                                        output_queries_dir, output_context_dir)
-#     dropped_lists = []
-
-#     for l in process_lists:
-#       new_l = [elem for idx, elem in enumerate(l) if idx not in drop_index]
-#       dropped_lists.append(new_l)
-    
-#     return dropped_lists
-
 def compute_answer_span(context_sent, gold_answer, sim_measure = GeneralizedJaccard):
     """
         input:
@@ -175,19 +139,17 @@ def compute_answer_span(context_sent, gold_answer, sim_measure = GeneralizedJacc
     return start_pos, best_substring
   
 def get_trans_context_answers(context_dir, sample_context_individual_length,
-                              gold_answers, answer_locs, output_context_dir):
+                              gold_answers, answer_locs):
     """
         input:
             context_dir <file>: the back translated context file
             sample_context_individual_length list<integer>: number of sentences in each context
             gold_answers list<list<string>>: the list of gold answers
             answer_locs list<list<integer>>: the list of answer locs
-            output_context_dir <file>: concatenated context
         returns:
             new_answers: list of new_answers
     """
     in_file = open(context_dir, 'r')
-    out_file = open(output_context_dir, 'w')
 
     num_samples = len(sample_context_individual_length)
     new_answers = []
@@ -198,7 +160,6 @@ def get_trans_context_answers(context_dir, sample_context_individual_length,
 
         new_start_idx = []
         new_curr_answers = []
-        curr_context = ''
         char_count = 0
 
         for j in range(sample_context_individual_length[i]):
@@ -210,29 +171,100 @@ def get_trans_context_answers(context_dir, sample_context_individual_length,
                     new_start_idx.append(char_count + start_pos)
                     new_curr_answers.append(best_substring)
             
-            curr_context += context_sent + " "
             char_count += len(context_sent + " ")
 
         new_answers.append(dict({'answer_start': new_start_idx, 'text': new_curr_answers}))
-        out_file.write(curr_context + '\n')
     
     in_file.close()
-    out_file.close()
     return new_answers
 
+# def get_trans_context_answers(context_dir, sample_context_individual_length,
+#                               gold_answers, answer_locs, output_context_dir):
+#     """
+#         input:
+#             context_dir <file>: the back translated context file
+#             sample_context_individual_length list<integer>: number of sentences in each context
+#             gold_answers list<list<string>>: the list of gold answers
+#             answer_locs list<list<integer>>: the list of answer locs
+#             output_context_dir <file>: concatenated context
+#         returns:
+#             new_answers: list of new_answers
+#     """
+#     in_file = open(context_dir, 'r')
+#     out_file = open(output_context_dir, 'w')
+
+#     num_samples = len(sample_context_individual_length)
+#     new_answers = []
+
+#     for i in range(num_samples):
+#         curr_answers = gold_answers[i]['text']
+#         curr_locs = answer_locs[i]
+
+#         new_start_idx = []
+#         new_curr_answers = []
+#         curr_context = ''
+#         char_count = 0
+
+#         for j in range(sample_context_individual_length[i]):
+#             context_sent = in_file.readline().strip()
+
+#             for k in range(len(curr_locs)):
+#                 if j == curr_locs[k]:
+#                     start_pos, best_substring = compute_answer_span(context_sent, curr_answers[k])
+#                     new_start_idx.append(char_count + start_pos)
+#                     new_curr_answers.append(best_substring)
+            
+#             curr_context += context_sent + " "
+#             char_count += len(context_sent + " ")
+
+#         new_answers.append(dict({'answer_start': new_start_idx, 'text': new_curr_answers}))
+#         out_file.write(curr_context + '\n')
+    
+#     in_file.close()
+#     out_file.close()
+#     return new_answers
+  
 def concat(file_dir):
     with open(file_dir, 'r') as f:
       output = [line.strip() for line in f]
     return output
 
-def clean_sample_files(keep_index, queries_dir, paragraph_dir):
-  sample_queries = concat(queries_dir)
-  sample_paragraph = concat(paragraph_dir)
+# def concat_queries(queries_dir):
+#     output_queries = []
+#     f = open(queries_dir, 'r')
+#     whole_queries = f.readlines()
+#     for q in whole_queries:
+#         output_queries.append(q)
+#     return output_queries
   
-  if len(sample_queries) != len(sample_paragraph):
-      print("Error! Queries and context not of the same length!")
+def concat_context(context_dir, sample_context_individual_length):
+    output_context = []
+    count = 0
+    f = open(context_dir, 'r')
+    whole_context = f.readlines()
+    for l in sample_context_individual_length:
+        individual_context = whole_context[count:(count+l)]
+        individual_context = [ic.strip() for ic in individual_context]
+        individual_context = ' '.join(individual_context)
+        output_context.append(individual_context)
+        count += l
+    f.close()
+    return output_context
   
-  return clean_lists(keep_index, [sample_queries, sample_paragraph])
+def clean_sample_files(keep_index, queries_dir, context_dir, sample_context_individual_length):
+  sample_queries = [elem for idx, elem in enumerate(concat(queries_dir)) if idx in keep_index]
+  sample_context = []
+  
+  f = open(context_dir, 'r')
+  num_samples = len(sample_context_individual_length)
+
+  for i in range(num_samples):
+    for j in range(sample_context_individual_length[i]):
+      context_sent = f.readline().strip()
+      if i in keep_index:
+        sample_context.append(context_sent)
+
+  return sample_queries, sample_context
 
 # def compute_backtrans_bleu(preds, refs):
 #   bleu = sacrebleu.corpus_bleu(preds, [refs])
