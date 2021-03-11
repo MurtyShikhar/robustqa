@@ -4,6 +4,7 @@ from backtranslate_util import sample_dataset, get_keep_index, clean_lists, get_
 import util
 import sacrebleu
 import json
+import pickle
 from transformers import DistilBertTokenizerFast
 
 # def prepare_eval_data(dataset_dict, tokenizer):
@@ -179,6 +180,9 @@ for i in range(10):
     print("context:", new_data_dict['context'][i])
     print("id:", new_data_dict['id'][i])
     print("answer:", new_data_dict['answer'][i])
+    
+with open(args.aug_dataset_pickle, 'wb') as pickle_file:
+    pickle.dump(new_data_dict, pickle_file)
 
 with open(args.aug_dataset_dict, 'w', encoding ='utf8') as json_file: 
     json.dump(new_data_dict, json_file, indent = 4) 
