@@ -31,7 +31,7 @@ def sample_dataset(args, datasets, data_dir, sample_queries_dir, sample_context_
     write_queries(sample_queries, sample_queries_dir)
     sample_context_individual_length, answer_locs = write_context(sample_context, gold_answers, sample_context_dir)
         
-    return dataset_dict, sample_idx, sample_context_individual_length, gold_answers, answer_locs
+    return dataset_dict, sample_context_individual_length, gold_answers, answer_locs
     
 
 def write_queries(queries, output_dir):
