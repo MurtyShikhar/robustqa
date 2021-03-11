@@ -140,7 +140,7 @@ def gen_augmented_dataset(args, mode='nmt'):
     keep_index_2 = get_keep_index(args.back_trans_queries_dir, args.back_trans_context_dir, dropped_context_individual_length,
                               args.back_dropped_queries_dir, args.back_dropped_context_dir)
     sample_idx, dropped_context_individual_length, gold_answers, answer_locs = clean_lists(keep_index_2, [sample_idx, dropped_context_individual_length, gold_answers, answer_locs])
-    print('Num of non-empty examples after translation:', len(sample_idx))
+    print('Num of non-empty examples after back translation:', len(sample_idx))
 
     # estimate new answers
     new_answers = get_trans_context_answers(args.back_dropped_context_dir, dropped_context_individual_length, 
