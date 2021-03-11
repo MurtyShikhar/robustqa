@@ -43,5 +43,8 @@ def get_train_test_args():
     # where to store the blank line dropped back translated queries and context
     parser.add_argument('--back_dropped_queries_dir', type=str, default='2_layer_nmt/QA/trans_es_en_queries_beam_5_dropped.txt')
     parser.add_argument('--back_dropped_context_dir', type=str, default='2_layer_nmt/QA/trans_es_en_context_beam_5_dropped.txt')
+    
+    # where to store augmented dataset
+    parser.add_argument('--aug_dataset_dict', type=str, default='augmented_dataset_beam_5.json')
     args = parser.parse_args()
     return args
