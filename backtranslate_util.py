@@ -87,7 +87,6 @@ def get_keep_index(queries_dir, context_dir, sample_context_individual_length,
           c = c_file.readline()
           if c.strip() == '':
             drop = True
-            break
           else:
             context.append(c)
       
