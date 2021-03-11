@@ -1,6 +1,6 @@
 from args import get_train_test_args
 import argparse
-from backtranslate_util import sample_dataset, get_keep_index, clean_lists, get_trans_context_answers, concat, clean_sample_files
+from backtranslate_util import sample_dataset, get_keep_index, clean_lists, get_trans_context_answers, concat, concat_context, clean_sample_files
 import util
 import sacrebleu
 from transformers import DistilBertTokenizerFast
