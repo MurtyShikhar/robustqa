@@ -166,15 +166,12 @@ def compute_answer_span(context_sent, gold_answer, sim_measure = GeneralizedJacc
     
     for i in range(n):
         for j in range(n-i):
-            substring = ''.join(context_sent_token[i:n-j])
             current_score = me.get_raw_score(context_sent_token[i:n-j], answer_sent_token)
-            
             if current_score > best_jac_score:
                 best_jac_score = current_score
-                best_substring = substring.strip()
+                best_substring = ''.join(context_sent_token[i:n-j]).strip()
 
     start_pos = context_sent.find(best_substring)
-    
     return start_pos, best_substring
   
 def get_trans_context_answers(context_dir, sample_context_individual_length,
