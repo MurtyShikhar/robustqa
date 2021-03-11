@@ -3,6 +3,7 @@ import argparse
 from backtranslate_util import sample_dataset, get_keep_index, clean_lists, get_trans_context_answers, concat, concat_context, clean_sample_files
 import util
 import sacrebleu
+import json
 from transformers import DistilBertTokenizerFast
 
 # def prepare_eval_data(dataset_dict, tokenizer):
@@ -178,6 +179,8 @@ for i in range(10):
     print("id:", new_data_dict['id'][i])
     print("answer:", new_data_dict['answer'][i])
 
+with open(args.aug_dataset_dict, 'w', encoding ='utf8') as json_file: 
+    json.dump(new_data_dict, json_file, indent = 4) 
     
 # new_dataset_dict = dict(dataset_dict)
 
