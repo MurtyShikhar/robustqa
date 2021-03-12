@@ -31,6 +31,7 @@ def get_nmt_args(beam=1):
     parser.add_argument('--train-dir', type=str, default='datasets/indomain_train')
     parser.add_argument('--sample_prob', type=float, default=0.1)
     parser.add_argument('--seed', type=int, default=42)
+    parser.add_argument('--jaccard_threshold', type=float, default=0.6)
         
     # where to save the sampling (with sampling prob) queries and context
     parser.add_argument('--sample_queries_dir', type=str, default='2_layer_nmt/QA/sample_queries.txt')
