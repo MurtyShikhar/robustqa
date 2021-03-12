@@ -1,6 +1,7 @@
 import torch
 from args import get_queries_args, get_context_args
 from tqdm import tqdm
+import sys
 # pip install Cython
 # pip install hydra-core
 # pip install sacremoses
@@ -29,7 +30,7 @@ def run(model, input_dir, output_dir):
     in_file = open(input_dir, 'r')
     out_file = open(output_dir, 'w')
 
-    for line in tqdm(in_file, desc='Translating'):
+    for line in tqdm(in_file, desc='Translating', file=sys.stdout):
         trans = model.translate(line)
         out_file.write(trans + "\n")
 
