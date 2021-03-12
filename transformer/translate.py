@@ -12,6 +12,18 @@ def transformer_19(src, tgt, input_dir, output_dir):
     model.cuda()
     run(model, input_dir, output_dir)
 
+
+def pretrained(type, year, src, tgt, input_dir, output_dir):
+    if year == 19:
+        model = torch.hub.load('pytorch/fairseq', '{0}.wmt{1}.{2}-{3}'.format(type, year, src, tgt),
+                       checkpoint_file='model1.pt', tokenizer='moses', bpe='fastbpe')
+    else:
+        model = torch.hub.load('pytorch/fairseq', '{0}.wmt{1}.{2}-{3}'.format(type, year, src, tgt),
+                       tokenizer='moses', bpe='subword_nmt')
+    model.eval()
+    model.cuda()
+    run(model, input_dir, output_dir)
+
     
 def run(model, input_dir, output_dir):
     in_file = open(input_dir, 'r')
