@@ -216,7 +216,7 @@ def concat_context(context_dir, sample_context_individual_length):
     return output_context
   
   
-def drop_sample_files(keep_index, queries_dir, context_dir, dropped_queries_dir, dropped_context_dir, sample_context_individual_length):
+def drop_files(keep_index, queries_dir, context_dir, dropped_queries_dir, dropped_context_dir, sample_context_individual_length):
   q_file = open(queries_dir, 'r')
   c_file = open(context_dir, 'r')
   output_q_file = open(dropped_queries_dir, 'w')
