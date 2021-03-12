@@ -190,8 +190,8 @@ def get_trans_context_answers(context_dir, sample_context_individual_length,
         # for debug 
         print("Example: "+str(j))
         print("context sent: "+ context_sent)
-        print("gold answer: " + curr_answers)
-        print("Best substring: " + new_curr_answers)
+        print("gold answer: " + str(curr_answers))
+        print("Best substring: " + str(new_curr_answers))
         print("Best jaccard score: " + str(jac_scores))
         
         if max(jac_scores) > threshold:
