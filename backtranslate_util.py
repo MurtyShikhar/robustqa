@@ -177,7 +177,7 @@ def get_trans_context_answers(context_dir, sample_context_individual_length,
 
         for j in range(sample_context_individual_length[i]):
           context_sent = in_file.readline().strip()
-          
+          print(context_sent)
           for k in range(len(curr_locs)):
             if j == curr_locs[k]:
               start_pos, best_substring, best_jac_score = compute_answer_span(context_sent, curr_answers[k])
@@ -188,11 +188,10 @@ def get_trans_context_answers(context_dir, sample_context_individual_length,
           char_count += len(context_sent + " ")
           
         # for debug 
-        print("Example: "+str(j))
-        print("context sent: "+ context_sent)
         print("gold answer: " + str(curr_answers))
         print("Best substring: " + str(new_curr_answers))
         print("Best jaccard score: " + str(jac_scores))
+        print("\n")
         
         if max(jac_scores) > threshold:
           keep_index.append(i)
