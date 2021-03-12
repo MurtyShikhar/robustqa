@@ -1,5 +1,5 @@
 import torch
-from transformer_args import get_queries_args, get_context_args
+from transformer_args import get_transformer_args
 from tqdm import tqdm
 # pip install Cython
 # pip install hydra-core
@@ -40,8 +40,8 @@ def ru_en(input_dir, output_dir):
 def run(model, input_dir, output_dir):
     in_file = open(input_dir, 'r')
     out_file = open(output_dir, 'w')
-
-    for line in tqdm(in_file, desc='Translating'):
+    
+    for line in tqdm(in_file.readlines(), desc='Translating: '):
         trans = model.translate(line)
         out_file.write(trans + "\n")
 
@@ -51,25 +51,22 @@ def run(model, input_dir, output_dir):
 
 
 if __name__ == '__main__':
+    args = get_transformer_args(lang='de')
     print("========= Translating queries (de) =========")
-    queries_args = get_queries_args(lang='de')
-    en_de(queries_args.input_dir, queries_args.trans_dir)
-    de_en(queries_args.trans_dir, queries_args.backtrans_dir)
-    
+    en_de(args.queries_input_dir, args.queries_trans_dir)
+    de_en(args.queries_trans_dir, args.queries_backtrans_dir)
 #     print("========= Translating context (de) =========")
-#     context_args = get_context_args(lang='de')
-#     en_de(context_args.input_dir, context_args.trans_dir)
-#     de_en(context_args.trans_dir, context_args.backtrans_dir)
+#     en_de(args.context_input_dir, args.context_trans_dir)
+#     de_en(args.context_trans_dir, args.context_backtrans_dir)
 
+#     args = get_transformer_args(lang='ru')
 #     print("========= Translating queries (ru) =========")
-#     queries_args = get_queries_args(lang='ru')
-#     en_ru(queries_args.input_dir, queries_args.trans_dir)
-#     ru_en(queries_args.trans_dir, queries_args.backtrans_dir)
-    
+#     en_ru(args.queries_input_dir, args.queries_trans_dir)
+#     ru_en(args.queries_trans_dir, args.queries_backtrans_dir) 
 #     print("========= Translating context (ru) =========")
-#     context_args = get_context_args(lang='ru')
-#     en_ru(context_args.input_dir, context_args.trans_dir)
-#     ru_en(context_args.trans_dir, context_args.backtrans_dir)
+#     en_ru(args.context_input_dir, args.context_trans_dir)
+#     ru_en(args.context_trans_dir, args.context_backtrans_dir)
+
 
 # Test
 # de_trans = en2de.translate('Hello world!')
