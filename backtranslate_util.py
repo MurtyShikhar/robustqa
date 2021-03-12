@@ -186,9 +186,14 @@ def get_trans_context_answers(context_dir, sample_context_individual_length,
               jac_scores.append(best_jac_score)
             
           char_count += len(context_sent + " ")
+          
         # for debug 
         print("Example: "+str(j))
-        print(jac_scores)
+        print("context sent: "+ context_sent)
+        print("gold answer: " + curr_answers)
+        print("Best substring: " + new_curr_answers)
+        print("Best jaccard score: " + str(jac_scores))
+        
         if max(jac_scores) > threshold:
           keep_index.append(i)
           new_answers.append(dict({'answer_start': new_start_idx, 'text': new_curr_answers}))
