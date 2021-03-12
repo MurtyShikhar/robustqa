@@ -40,22 +40,21 @@ def run(model, input_dir, output_dir):
 
 
 if __name__ == '__main__':
+    args = get_transformer_args(lang='de')
     print("========= Translating queries (de) =========")
-    queries_args = get_queries_args(lang='de')
-    transformer_19('en', 'de', queries_args.input_dir, queries_args.trans_dir)
-    transformer_19('de', 'en', queries_args.trans_dir, queries_args.backtrans_dir)
+    transformer_19('en', 'de', args.queries_input_dir, args.queries_trans_dir)
+    transformer_19('de', 'en', args.queries_trans_dir, args.queries_backtrans_dir)
     
 #     print("========= Translating context (de) =========")
-#     context_args = get_context_args(lang='de')
-#     transformer_19('en', 'de', context_args.input_dir, context_args.trans_dir)
-#     transformer_19('de', 'en', context_args.trans_dir, context_args.backtrans_dir)
+#     transformer_19('en', 'de', args.context_input_dir, args.context_trans_dir)
+#     transformer_19('de', 'en', args.context_trans_dir, args.context_backtrans_dir)
 
     print("========= Translating queries (ru) =========")
-    queries_args = get_queries_args(lang='ru')
-    transformer_19('en', 'ru', queries_args.input_dir, queries_args.trans_dir)
-    transformer_19('ru', 'en', queries_args.trans_dir, queries_args.backtrans_dir)
+    args = get_transformer_args(lang='ru')
+    transformer_19('en', 'ru', args.queries_input_dir, args.queries_trans_dir)
+    transformer_19('ru', 'en', args.queries_trans_dir, args.queries_backtrans_dir)
     
 #     print("========= Translating context (ru) =========")
 #     context_args = get_context_args(lang='ru')
-#     transformer_19('en', 'ru', context_args.input_dir, context_args.trans_dir)
-#     transformer_19('ru', 'en', context_args.trans_dir, context_args.backtrans_dir)
+#     transformer_19('en', 'ru', args.context_input_dir, args.context_trans_dir)
+#     transformer_19('ru', 'en', args.context_trans_dir, args.context_backtrans_dir)
