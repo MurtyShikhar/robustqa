@@ -1,5 +1,5 @@
 import torch
-from args import get_queries_args, get_context_args
+from args import get_transformer_args
 from tqdm import tqdm
 import sys
 # pip install Cython
