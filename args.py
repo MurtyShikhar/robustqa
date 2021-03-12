@@ -54,6 +54,7 @@ def get_nmt_args(beam=1):
     
     # jaccard similarity filtering
     parser.add_argument('--jaccard_threshold', type=float, default=0.6)
+    parser.add_argument('--jaccard_queries_dir', type=str, default='2_layer_nmt/QA/trans_es_en_queries_beam_{0}_jaccard.txt'.format(beam))
     parser.add_argument('--jaccard_context_dir', type=str, default='2_layer_nmt/QA/trans_es_en_context_beam_{0}_jaccard.txt'.format(beam))
     
     # where to store dropped sample files
