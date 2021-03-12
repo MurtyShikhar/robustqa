@@ -49,10 +49,10 @@ if __name__ == '__main__':
 #     transformer_19('en', 'de', context_args.input_dir, context_args.trans_dir)
 #     transformer_19('de', 'en', context_args.trans_dir, context_args.backtrans_dir)
 
-#     print("========= Translating queries (ru) =========")
-#     queries_args = get_queries_args(lang='ru')
-#     transformer_19('en', 'ru', queries_args.input_dir, queries_args.trans_dir)
-#     transformer_19('ru', 'en', queries_args.trans_dir, queries_args.backtrans_dir)
+    print("========= Translating queries (ru) =========")
+    queries_args = get_queries_args(lang='ru')
+    transformer_19('en', 'ru', queries_args.input_dir, queries_args.trans_dir)
+    transformer_19('ru', 'en', queries_args.trans_dir, queries_args.backtrans_dir)
     
 #     print("========= Translating context (ru) =========")
 #     context_args = get_context_args(lang='ru')
