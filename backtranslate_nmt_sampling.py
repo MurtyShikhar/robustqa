@@ -8,9 +8,9 @@ def nmt_sampling(beam=1):
     args = get_nmt_args(beam)
     
     # sampling
-    dataset_dict, sample_idx, sample_context_individual_length, gold_answers, answer_locs = sample_dataset(args, args.train_datasets, args.train_dir,
-                                                                                                       args.sample_queries_dir, args.sample_context_dir, 
-                                                                                                       args.sample_prob, args.seed)
+    sample_idx, sample_context_individual_length, gold_answers, answer_locs = sample_dataset(args, args.train_datasets, args.train_dir,
+                                                                                             args.sample_queries_dir, args.sample_context_dir, 
+                                                                                             args.sample_prob, args.seed)
 
     # forward translation
     keep_index_1 = get_keep_index(args.trans_queries_dir, args.trans_context_dir, sample_context_individual_length,
@@ -42,7 +42,7 @@ def nmt_sampling(beam=1):
     save_as_json(new_data_dict, args.aug_dataset_json)
 
     # data_encodings = read_and_process(args, tokenizer, new_dataset_dict, data_dir, dataset_name, split_name)
-    # return util.QADataset(data_encodings, train=(split_name=='train')), dataset_dict
+    # return util.QADataset(data_encodings, train=(split_name=='train')), new_dataset_dict
 
     
 if __name__ == '__main__':
