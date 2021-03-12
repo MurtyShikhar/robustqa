@@ -36,13 +36,13 @@ def run(model, input_dir, output_dir):
 
 if __name__ == '__main__':
     queries_args = get_queries_args()
-    context_args = get_context_args()
+    #context_args = get_context_args()
 
     print("========= Translating queries =========")
     backtranslate(queries_args)
 
-    print("========= Translating context =========")
-    backtranslate(context_args)
+    #print("========= Translating context =========")
+    #backtranslate(context_args)
 
 # Test
 # de_trans = en2de.translate('Hello world!')
