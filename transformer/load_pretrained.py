@@ -22,7 +22,7 @@ def de_en(input_dir, output_dir):
     
 
 def en_ru(input_dir, output_dir):
-    en2de = torch.hub.load('pytorch/fairseq', 'transformer.wmt19.en-ru',
+    en2ru = torch.hub.load('pytorch/fairseq', 'transformer.wmt19.en-ru',
                        checkpoint_file='model1.pt', tokenizer='moses', bpe='fastbpe')
     en2ru.eval()
     en2ru.cuda()
