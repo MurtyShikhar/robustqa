@@ -51,7 +51,9 @@ def get_nmt_args(beam=1):
     # where to store the blank line dropped back translated queries and context
     parser.add_argument('--back_dropped_queries_dir', type=str, default='2_layer_nmt/QA/trans_es_en_queries_beam_{0}_dropped.txt'.format(beam))
     parser.add_argument('--back_dropped_context_dir', type=str, default='2_layer_nmt/QA/trans_es_en_context_beam_{0}_dropped.txt'.format(beam))
-    # for sanity check bleu score
+    
+    # where to store dropped sample files
+    parser.add_argument('--sample_queries_dropped_dir', type=str, default='2_layer_nmt/QA/sample_queries_beam_{0}_dropped.txt'.format(beam))
     parser.add_argument('--sample_context_dropped_dir', type=str, default='2_layer_nmt/QA/sample_context_beam_{0}_dropped.txt'.format(beam))
     
     # where to store augmented dataset
