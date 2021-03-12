@@ -5,12 +5,12 @@ from googletrans import Translator
 # pip install googletrans==3.1.0a0
 
 def en_es(input_dir, output_dir):
-    translator_en2es = Translator(src = "en", dest = "es")
+    translator_en2es = Translator(dest = "es")
     run(translator_en2es, input_dir, output_dir)
 
     
 def es_en(input_dir, output_dir):
-    translator_es2en = Translator(src = "es", dest = "en")
+    translator_es2en = Translator(dest = "en")
     run(translator_es2en, input_dir, output_dir)
 
 def run(model, input_dir, output_dir):
