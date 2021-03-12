@@ -14,7 +14,7 @@ from py_stringmatching import GeneralizedJaccard
 nlp = spacy.load('en_core_web_sm')
 
 def sample_dataset(args, datasets, data_dir, sample_queries_dir, sample_context_dir,
-                   sample_prob = 0.1, seed = 94305):
+                   sample_prob=0.1, seed=94305, max_num=150000):
     np.random.seed(seed)
     datasets = datasets.split(',')
     dataset_dict = None
@@ -24,7 +24,7 @@ def sample_dataset(args, datasets, data_dir, sample_queries_dir, sample_context_
         dataset_dict_curr = util.read_squad(f'{data_dir}/{dataset}')
         dataset_dict = util.merge(dataset_dict, dataset_dict_curr)
     train_length = len(dataset_dict['id'])
-    sample_idx = list(np.random.choice(train_length, size = int(sample_prob * train_length), replace = False))
+    sample_idx = list(np.random.choice(train_length, size = int(sample_prob * train_length), replace = False))[:max_num]
 
     sample_queries = [dataset_dict['question'][i] for i in sample_idx]
     sample_context = [dataset_dict['context'][i] for i in sample_idx]
