@@ -31,7 +31,6 @@ def get_nmt_args(beam=1):
     parser.add_argument('--train-dir', type=str, default='datasets/indomain_train')
     parser.add_argument('--sample_prob', type=float, default=0.1)
     parser.add_argument('--seed', type=int, default=42)
-    parser.add_argument('--jaccard_threshold', type=float, default=0.6)
         
     # where to save the sampling (with sampling prob) queries and context
     parser.add_argument('--sample_queries_dir', type=str, default='2_layer_nmt/QA/sample_queries.txt')
@@ -52,6 +51,10 @@ def get_nmt_args(beam=1):
     # where to store the blank line dropped back translated queries and context
     parser.add_argument('--back_dropped_queries_dir', type=str, default='2_layer_nmt/QA/trans_es_en_queries_beam_{0}_dropped.txt'.format(beam))
     parser.add_argument('--back_dropped_context_dir', type=str, default='2_layer_nmt/QA/trans_es_en_context_beam_{0}_dropped.txt'.format(beam))
+    
+    # jaccard similarity filtering
+    parser.add_argument('--jaccard_threshold', type=float, default=0.6)
+    parser.add_argument('--jaccard_context_dir', type=str, default='2_layer_nmt/QA/trans_es_en_context_beam_{0}_jaccard.txt'.format(beam))
     
     # where to store dropped sample files
     parser.add_argument('--sample_queries_dropped_dir', type=str, default='2_layer_nmt/QA/sample_queries_beam_{0}_dropped.txt'.format(beam))
