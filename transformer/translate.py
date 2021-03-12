@@ -30,7 +30,7 @@ def run(model, input_dir, output_dir):
     out_file = open(output_dir, 'w')
     total = len(in_file.readlines())
     
-    for tqdm(total=total, desc='Translating') as pbar:
+    with tqdm(total=total, desc='Translating') as pbar:
         for line in in_file:
             trans = model.translate(line)
             out_file.write(trans + "\n")
