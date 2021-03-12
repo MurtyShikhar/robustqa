@@ -210,29 +210,27 @@ def concat_context(context_dir, sample_context_individual_length):
     return output_context
   
   
-def clean_sample_files(keep_index, queries_dir, context_dir, dropped_context_dir, sample_context_individual_length):
-  sample_queries = [elem for idx, elem in enumerate(concat(queries_dir)) if idx in keep_index]
-  sample_context = []
-  
-  f = open(context_dir, 'r')
-  
-  # for sanity check bleu score
-  new_f = open(dropped_context_dir, 'w')
-  
+def drop_sample_files(keep_index, queries_dir, context_dir, dropped_queries_dir, dropped_context_dir, sample_context_individual_length):
+  q_file = open(queries_dir, 'r')
+  c_file = open(context_dir, 'r')
+  output_q_file = open(dropped_queries_dir, 'w')
+  output_c_file = open(dropped_context_dir, 'w')
   num_samples = len(sample_context_individual_length)
 
   for i in range(num_samples):
+    query = q_file.readline()
+    if i in keep_index:
+      output_q_file.write(query)
+    
     for j in range(sample_context_individual_length[i]):
-      context_sent = f.readline().strip()
+      context_sent = c_file.readline()
       if i in keep_index:
-        sample_context.append(context_sent)
-        
-        # for sanity check bleu score
-        new_f.write(context_sent + '\n')
+        output_c_file.write(context_sent)
   
-  f.close()
-  new_f.close()
-  return sample_queries, sample_context
+  q_file.close()
+  c_file.close()
+  output_q_file.close()
+  output_c_file.close()
 
 
 def gen_augmented_dataset(backtranslated_queries, backtranslated_context, qids, new_answers):
