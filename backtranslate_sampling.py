@@ -29,7 +29,8 @@ def nmt_sampling(args):
 
     # compute queries and context BLEU
     keep_index = [elem for idx, elem in enumerate(keep_index_1) if idx in keep_index_2]
-    sample_queries, sample_context = clean_sample_files(keep_index, args.sample_queries_dir, args.sample_context_dir, args.sample_context_dropped_dir, sample_context_individual_length)
+    drop_sample_files(keep_index, args.sample_queries_dir, args.sample_context_dir, 
+                      args.sample_queries_dropped_dir, args.sample_context_dropped_dir, sample_context_individual_length)
     queries_bleu = sacrebleu.corpus_bleu(concat(args.back_dropped_queries_dir), [sample_queries])
     print('Queries back translation BLEU: {}'.format(queries_bleu.score))
     context_bleu = sacrebleu.corpus_bleu(concat(args.back_dropped_context_dir), [sample_context])
