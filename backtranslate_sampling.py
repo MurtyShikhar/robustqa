@@ -49,10 +49,9 @@ def nmt_sampling(args):
     print_augmented_dataset(new_data_dict)
     save_as_pickle(new_data_dict, args.aug_dataset_pickle)
     save_as_json(new_data_dict, args.aug_dataset_json)
-    
 
-# data_encodings = read_and_process(args, tokenizer, new_dataset_dict, data_dir, dataset_name, split_name)
-# return util.QADataset(data_encodings, train=(split_name=='train')), dataset_dict
+    # data_encodings = read_and_process(args, tokenizer, new_dataset_dict, data_dir, dataset_name, split_name)
+    # return util.QADataset(data_encodings, train=(split_name=='train')), dataset_dict
 
 if __name__ == '__main__':
     args = get_nmt_args(beam=1)
