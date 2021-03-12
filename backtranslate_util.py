@@ -176,16 +176,16 @@ def get_trans_context_answers(context_dir, sample_context_individual_length,
         char_count = 0
 
         for j in range(sample_context_individual_length[i]):
-            context_sent = in_file.readline().strip()
+          context_sent = in_file.readline().strip()
+          
+          for k in range(len(curr_locs)):
+            if j == curr_locs[k]:
+              start_pos, best_substring, best_jac_score = compute_answer_span(context_sent, curr_answers[k])
+              new_start_idx.append(char_count + start_pos)
+              new_curr_answers.append(best_substring)
+              jac_scores.append(best_jac_score)
             
-            for k in range(len(curr_locs)):
-                if j == curr_locs[k]:
-                    start_pos, best_substring, best_jac_score = compute_answer_span(context_sent, curr_answers[k])
-                    new_start_idx.append(char_count + start_pos)
-                    new_curr_answers.append(best_substring)
-                    jac_scores.append(best_jac_score)
-            
-            char_count += len(context_sent + " ")
+          char_count += len(context_sent + " ")
         
         if max(jac_scores) > threshold:
           keep_index.append(i)
