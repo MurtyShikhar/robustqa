@@ -241,7 +241,12 @@ def compute_backtrans_bleu(sample_queries_dir, sample_context_dir, backtrans_que
   print('Context back translation BLEU: {}'.format(context_bleu.score))
   
   
-def gen_augmented_dataset(backtranslated_queries, backtranslated_context, qids, new_answers):
+def gen_augmented_dataset(aug_data_name, backtrans_queries_dir, backtrans_context_dir, 
+                          sample_context_individual_length, sample_idx, new_answers):
+  backtranslated_queries = concat(backtrans_queries_dir)
+  backtranslated_context = concat_context(backtrans_context_dir, sample_context_individual_length)
+  qids = ['aug'+ aug_data_name + 'num' + str(x) for x in sample_idx]
+    
   new_data_dict = {'question': [], 'context': [], 'id': [], 'answer': []}
   for question, context, qid, answer in zip(backtranslated_queries, backtranslated_context, qids, new_answers):
       new_data_dict['question'].append(question)
@@ -253,6 +258,8 @@ def gen_augmented_dataset(backtranslated_queries, backtranslated_context, qids, 
   print('Num of backtranslated context:', len(backtranslated_context))
   print('Num of augmented samples:', len(sample_idx))
   print('Num of new answers:', len(new_answers))
+  
+  print_augmented_dataset(new_data_dict)
   return new_data_dict
 
 
