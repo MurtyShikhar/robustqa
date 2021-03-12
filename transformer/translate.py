@@ -44,7 +44,6 @@ if __name__ == '__main__':
     print("========= Translating queries (de) =========")
     transformer_19('en', 'de', args.queries_input_dir, args.queries_trans_dir)
     transformer_19('de', 'en', args.queries_trans_dir, args.queries_backtrans_dir)
-    
 #     print("========= Translating context (de) =========")
 #     transformer_19('en', 'de', args.context_input_dir, args.context_trans_dir)
 #     transformer_19('de', 'en', args.context_trans_dir, args.context_backtrans_dir)
@@ -52,9 +51,7 @@ if __name__ == '__main__':
     print("========= Translating queries (ru) =========")
     args = get_transformer_args(lang='ru')
     transformer_19('en', 'ru', args.queries_input_dir, args.queries_trans_dir)
-    transformer_19('ru', 'en', args.queries_trans_dir, args.queries_backtrans_dir)
-    
+    transformer_19('ru', 'en', args.queries_trans_dir, args.queries_backtrans_dir) 
 #     print("========= Translating context (ru) =========")
-#     context_args = get_context_args(lang='ru')
 #     transformer_19('en', 'ru', args.context_input_dir, args.context_trans_dir)
 #     transformer_19('ru', 'en', args.context_trans_dir, args.context_backtrans_dir)
