@@ -1,7 +1,6 @@
 from args import get_nmt_args
 from backtranslate_util import *
 import util
-import sacrebleu
 # from transformers import DistilBertTokenizerFast
 
 
@@ -31,10 +30,8 @@ def nmt_sampling(args):
     keep_index = [elem for idx, elem in enumerate(keep_index_1) if idx in keep_index_2]
     drop_sample_files(keep_index, args.sample_queries_dir, args.sample_context_dir, 
                       args.sample_queries_dropped_dir, args.sample_context_dropped_dir, sample_context_individual_length)
-    queries_bleu = sacrebleu.corpus_bleu(concat(args.back_dropped_queries_dir), [sample_queries])
-    print('Queries back translation BLEU: {}'.format(queries_bleu.score))
-    context_bleu = sacrebleu.corpus_bleu(concat(args.back_dropped_context_dir), [sample_context])
-    print('Context back translation BLEU: {}'.format(context_bleu.score))
+    compute_backtrans_bleu(args.sample_queries_dropped_dir, args.sample_context_dropped_dir,
+                          args.back_dropped_queries_dir, args.back_dropped_context_dir)
 
     # create augmented dataset
     backtranslated_queries = concat(args.back_dropped_queries_dir)
