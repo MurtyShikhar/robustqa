@@ -69,8 +69,14 @@ def get_nmt_args(beam=1):
 
 def get_transformer_args(lang='de'):
     parser = argparse.ArgumentParser()
+    parser.add_argument('--train-datasets', type=str, default='squad,nat_questions,newsqa')
+    parser.add_argument('--train-dir', type=str, default='datasets/indomain_train')
+    parser.add_argument('--sample_prob', type=float, default=0.1)
+    parser.add_argument('--seed', type=int, default=42)
+    
     parser.add_argument('--sample_queries_dir', type=str, default='transformer/QA/sample_queries.txt')
-    parser.add_argument('--sample_context_dir', type=str, default='transformer/QA/sample_context.txt')    
+    parser.add_argument('--sample_context_dir', type=str, default='transformer/QA/sample_context.txt')
+    
     args = parser.parse_args()
     return args
 
