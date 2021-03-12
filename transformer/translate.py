@@ -28,12 +28,10 @@ def pretrained(type, year, src, tgt, input_dir, output_dir):
 def run(model, input_dir, output_dir):
     in_file = open(input_dir, 'r')
     out_file = open(output_dir, 'w')
-    total = len(in_file.readlines())
     
-    with tqdm(total=total, desc='Translating') as pbar:
-        for line in in_file:
-            trans = model.translate(line)
-            out_file.write(trans + "\n")
+    for line in tqdm(in_file.readlines(), desc='Translating: '):
+        trans = model.translate(line)
+        out_file.write(trans + "\n")
 
     in_file.close()
     out_file.close()
