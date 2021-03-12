@@ -25,8 +25,8 @@ def nmt_sampling(beam=1):
     print('Num of non-empty examples after back translation:', len(keep_index_2))
 
     # estimate new answers
-    new_answers = get_trans_context_answers(args.back_dropped_context_dir, dropped_context_individual_length, 
-                                            gold_answers, answer_locs)
+    keep_index_3, new_answers = get_trans_context_answers(args.back_dropped_context_dir, dropped_context_individual_length, 
+                                                          gold_answers, answer_locs, args.jaccard_threshold)
 
     # compute queries and context BLEU
     keep_index = [elem for idx, elem in enumerate(keep_index_1) if idx in keep_index_2]
