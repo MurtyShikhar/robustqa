@@ -9,13 +9,13 @@ def backtranslate(args):
                        checkpoint_file='model1.pt:model2.pt:model3.pt:model4.pt',
                        tokenizer='moses', bpe='fastbpe')
     en2de.eval()
-    # en2de.cuda()
+    en2de.cuda()
 
     de2en = torch.hub.load('pytorch/fairseq', 'transformer.wmt19.de-en',
                        checkpoint_file='model1.pt:model2.pt:model3.pt:model4.pt',
                        tokenizer='moses', bpe='fastbpe')
     de2en.eval()
-    # de2en.cuda()
+    de2en.cuda()
 
     run(en2de, args.input_dir, args.trans_dir)
     run(de2en, args.trans_dir, args.backtrans_dir)
