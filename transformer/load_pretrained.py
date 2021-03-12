@@ -63,13 +63,13 @@ if __name__ == '__main__':
 
 #     print("========= Translating queries (ru) =========")
 #     queries_args = get_queries_args(lang='ru')
-#     en_de(queries_args.input_dir, queries_args.trans_dir)
-#     de_en(queries_args.trans_dir, queries_args.backtrans_dir)
+#     en_ru(queries_args.input_dir, queries_args.trans_dir)
+#     ru_en(queries_args.trans_dir, queries_args.backtrans_dir)
     
 #     print("========= Translating context (ru) =========")
 #     context_args = get_context_args(lang='ru')
-#     en_de(context_args.input_dir, context_args.trans_dir)
-#     de_en(context_args.trans_dir, context_args.backtrans_dir)
+#     en_ru(context_args.input_dir, context_args.trans_dir)
+#     ru_en(context_args.trans_dir, context_args.backtrans_dir)
 
 # Test
 # de_trans = en2de.translate('Hello world!')
