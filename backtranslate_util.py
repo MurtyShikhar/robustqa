@@ -42,6 +42,7 @@ def write_queries(queries, output_dir):
             q += '?'
           f.write(q + '\n')
 
+          
 def write_context(context, gold_answers, output_dir):
     out_lengths = []
     answer_locs = []
@@ -66,6 +67,7 @@ def write_context(context, gold_answers, output_dir):
     f.close()
     return out_lengths, answer_locs
  
+
 def get_keep_index(queries_dir, context_dir, sample_context_individual_length,
                    output_queries_dir, output_context_dir):
     q_file = open(queries_dir, 'r')
@@ -103,12 +105,14 @@ def get_keep_index(queries_dir, context_dir, sample_context_individual_length,
     output_c_file.close()
     return keep_index
 
+  
 def clean_lists(keep_index, process_lists):
     cleaned_lists = []
     for l in process_lists:
       cleaned_lists.append([elem for idx, elem in enumerate(l) if idx in keep_index])
     return cleaned_lists
 
+  
 def compute_answer_span(context_sent, gold_answer, sim_measure = GeneralizedJaccard):
     """
         input:
@@ -137,6 +141,7 @@ def compute_answer_span(context_sent, gold_answer, sim_measure = GeneralizedJacc
 
     start_pos = context_sent.find(best_substring)
     return start_pos, best_substring
+  
   
 def get_trans_context_answers(context_dir, sample_context_individual_length,
                               gold_answers, answer_locs):
@@ -177,65 +182,13 @@ def get_trans_context_answers(context_dir, sample_context_individual_length,
     
     in_file.close()
     return new_answers
-
-# def get_trans_context_answers(context_dir, sample_context_individual_length,
-#                               gold_answers, answer_locs, output_context_dir):
-#     """
-#         input:
-#             context_dir <file>: the back translated context file
-#             sample_context_individual_length list<integer>: number of sentences in each context
-#             gold_answers list<list<string>>: the list of gold answers
-#             answer_locs list<list<integer>>: the list of answer locs
-#             output_context_dir <file>: concatenated context
-#         returns:
-#             new_answers: list of new_answers
-#     """
-#     in_file = open(context_dir, 'r')
-#     out_file = open(output_context_dir, 'w')
-
-#     num_samples = len(sample_context_individual_length)
-#     new_answers = []
-
-#     for i in range(num_samples):
-#         curr_answers = gold_answers[i]['text']
-#         curr_locs = answer_locs[i]
-
-#         new_start_idx = []
-#         new_curr_answers = []
-#         curr_context = ''
-#         char_count = 0
-
-#         for j in range(sample_context_individual_length[i]):
-#             context_sent = in_file.readline().strip()
-
-#             for k in range(len(curr_locs)):
-#                 if j == curr_locs[k]:
-#                     start_pos, best_substring = compute_answer_span(context_sent, curr_answers[k])
-#                     new_start_idx.append(char_count + start_pos)
-#                     new_curr_answers.append(best_substring)
-            
-#             curr_context += context_sent + " "
-#             char_count += len(context_sent + " ")
-
-#         new_answers.append(dict({'answer_start': new_start_idx, 'text': new_curr_answers}))
-#         out_file.write(curr_context + '\n')
-    
-#     in_file.close()
-#     out_file.close()
-#     return new_answers
+  
   
 def concat(file_dir):
     with open(file_dir, 'r') as f:
       output = [line.strip() for line in f]
     return output
-
-# def concat_queries(queries_dir):
-#     output_queries = []
-#     f = open(queries_dir, 'r')
-#     whole_queries = f.readlines()
-#     for q in whole_queries:
-#         output_queries.append(q)
-#     return output_queries
+  
   
 def concat_context(context_dir, sample_context_individual_length):
     output_context = []
@@ -250,6 +203,7 @@ def concat_context(context_dir, sample_context_individual_length):
         count += l
     f.close()
     return output_context
+  
   
 def clean_sample_files(keep_index, queries_dir, context_dir, dropped_context_dir, sample_context_individual_length):
   sample_queries = [elem for idx, elem in enumerate(concat(queries_dir)) if idx in keep_index]
@@ -275,6 +229,7 @@ def clean_sample_files(keep_index, queries_dir, context_dir, dropped_context_dir
   new_f.close()
   return sample_queries, sample_context
 
+
 def gen_augmented_dataset(backtranslated_queries, backtranslated_context, qids, new_answers):
   new_data_dict = {'question': [], 'context': [], 'id': [], 'answer': []}
   for question, context, qid, answer in zip(backtranslated_queries, backtranslated_context, qids, new_answers):
@@ -289,6 +244,7 @@ def gen_augmented_dataset(backtranslated_queries, backtranslated_context, qids, 
   print('Num of new answers:', len(new_answers))
   return new_data_dict
 
+
 def print_augmented_dataset(new_data_dict):
    for i in range(10):
       print("========== Augmented example {0} ==========".format(i))
@@ -297,24 +253,12 @@ def print_augmented_dataset(new_data_dict):
       print("id:", new_data_dict['id'][i])
       print("answer:", new_data_dict['answer'][i])
 
+      
 def save_as_pickle(new_data_dict, pickle_file):
   with open(pickle_file, 'wb') as f:
     pickle.dump(new_data_dict, f)
 
+    
 def save_as_json(new_data_dict, json_file):
   with open(json_file, 'w', encoding ='utf8') as f: 
     json.dump(new_data_dict, f, indent = 4) 
-
-# def compute_backtrans_bleu(preds, refs):
-#   bleu = sacrebleu.corpus_bleu(preds, [refs])
-#   return bleu.score
-
-        
-# def compute_backtrans_bleu(original_file, backtrans_file):
-#   ref_file = open(original_file, 'r')
-#   pred_file = open(backtrans_file, 'r')
-  
-#   refs = [line.strip() for line in ref_file]
-#   preds = [line.strip() for line in pred_file]
-#   bleu = sacrebleu.corpus_bleu(preds, [refs])
-#   return bleu.score
