@@ -235,9 +235,9 @@ def drop_sample_files(keep_index, queries_dir, context_dir, dropped_queries_dir,
 
 
 def compute_backtrans_bleu(sample_queries_dir, sample_context_dir, backtrans_queries_dir, backtrans_context_dir):
-  queries_bleu = sacrebleu.corpus_bleu(concat(backtrans_queries_dir), concat(sample_queries_dir))
+  queries_bleu = sacrebleu.corpus_bleu(concat(backtrans_queries_dir), [concat(sample_queries_dir)])
   print('Queries back translation BLEU: {}'.format(queries_bleu.score))
-  context_bleu = sacrebleu.corpus_bleu(concat(backtrans_context_dir), concat(sample_context_dir))
+  context_bleu = sacrebleu.corpus_bleu(concat(backtrans_context_dir), [concat(sample_context_dir)])
   print('Context back translation BLEU: {}'.format(context_bleu.score))
   
   
