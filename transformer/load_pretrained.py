@@ -20,7 +20,7 @@ def de_en(input_dir, output_dir):
                        tokenizer='moses', bpe='fastbpe')
     de2en.eval()
     de2en.cuda()
-    run(de2en, input_dir, output_dirr)
+    run(de2en, input_dir, output_dir)
     
 
 def run(model, input_dir, output_dir):
@@ -38,12 +38,12 @@ def run(model, input_dir, output_dir):
 
 if __name__ == '__main__':
     print("========= Translating queries =========")
-    queries_args = get_queries_args()
+    queries_args = get_queries_args(lang='de')
     en_de(queries_args.input_dir, queries_args.trans_dir)
     de_en(queries_args.trans_dir, queries_args.backtrans_dir)
     
 #     print("========= Translating context =========")
-#     context_args = get_context_args()
+#     context_args = get_context_args(lang='de')
 #     backtranslate(context_args)
 #     en_de(context_args.input_dir, context_args.trans_dir)
 #     de_en(context_args.trans_dir, context_args.backtrans_dir)
