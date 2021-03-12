@@ -31,7 +31,11 @@ def sample_dataset(args, datasets, data_dir, sample_queries_dir, sample_context_
     
     write_queries(sample_queries, sample_queries_dir)
     sample_context_individual_length, answer_locs = write_context(sample_context, gold_answers, sample_context_dir)
-        
+    
+    print('Sampled queries saved at:', sample_queries_dir)         
+    print('Sampled context saved at:', sample_context_dir)
+    print('Num of examples sampled:', len(sample_idx))
+    
     return dataset_dict, sample_idx, sample_context_individual_length, gold_answers, answer_locs
     
 
@@ -103,6 +107,7 @@ def get_keep_index(queries_dir, context_dir, sample_context_individual_length,
     c_file.close()
     output_q_file.close()
     output_c_file.close()
+    
     return keep_index
 
   
@@ -257,8 +262,10 @@ def print_augmented_dataset(new_data_dict):
 def save_as_pickle(new_data_dict, pickle_file):
   with open(pickle_file, 'wb') as f:
     pickle.dump(new_data_dict, f)
+  print("Augmented data (pickle) saved at:", pickle_file)
 
     
 def save_as_json(new_data_dict, json_file):
   with open(json_file, 'w', encoding ='utf8') as f: 
     json.dump(new_data_dict, f, indent = 4) 
+  print("Augmented data (json) saved at:", json_file)
