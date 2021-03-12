@@ -4,6 +4,7 @@ import util
 import sacrebleu
 # from transformers import DistilBertTokenizerFast
 
+
 def nmt_sampling(args):
     # sampling
     dataset_dict, sample_idx, sample_context_individual_length, gold_answers, answer_locs = sample_dataset(args, args.train_datasets, args.train_dir,
@@ -53,6 +54,7 @@ def nmt_sampling(args):
     # data_encodings = read_and_process(args, tokenizer, new_dataset_dict, data_dir, dataset_name, split_name)
     # return util.QADataset(data_encodings, train=(split_name=='train')), dataset_dict
 
+    
 if __name__ == '__main__':
     args = get_nmt_args(beam=1)
     nmt_sampling(args)
