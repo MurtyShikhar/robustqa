@@ -37,7 +37,7 @@ def sample_dataset(args, datasets, data_dir, sample_queries_dir, sample_context_
     print('Sampled context saved at:', sample_context_dir)
     print('Num of examples sampled:', len(sample_idx))
     
-    return dataset_dict, sample_idx, sample_context_individual_length, gold_answers, answer_locs
+    return sample_idx, sample_context_individual_length, gold_answers, answer_locs
     
 
 def write_queries(queries, output_dir):
