@@ -4,7 +4,9 @@ import util
 # from transformers import DistilBertTokenizerFast
 
 
-def nmt_sampling(args):
+def nmt_sampling(beam=1):
+    args = get_nmt_args(beam)
+    
     # sampling
     dataset_dict, sample_idx, sample_context_individual_length, gold_answers, answer_locs = sample_dataset(args, args.train_datasets, args.train_dir,
                                                                                                        args.sample_queries_dir, args.sample_context_dir, 
@@ -24,7 +26,7 @@ def nmt_sampling(args):
 
     # estimate new answers
     new_answers = get_trans_context_answers(args.back_dropped_context_dir, dropped_context_individual_length, 
-                                        gold_answers, answer_locs)
+                                            gold_answers, answer_locs)
 
     # compute queries and context BLEU
     keep_index = [elem for idx, elem in enumerate(keep_index_1) if idx in keep_index_2]
@@ -34,13 +36,8 @@ def nmt_sampling(args):
                           args.back_dropped_queries_dir, args.back_dropped_context_dir)
 
     # create augmented dataset
-    backtranslated_queries = concat(args.back_dropped_queries_dir)
-    backtranslated_context = concat_context(args.back_dropped_context_dir, dropped_context_individual_length)
-    qids = ['augbeam5num'+ str(x) for x in sample_idx]
-    new_data_dict = gen_augmented_dataset(backtranslated_queries, backtranslated_context, qids, new_answers)
-    
-    # test
-    print_augmented_dataset(new_data_dict)
+    new_data_dict = gen_augmented_dataset('beam{0}'.format(beam), args.back_dropped_queries_dir, args.back_dropped_context_dir, 
+                                          dropped_context_individual_length, sample_idx, new_answers)
     save_as_pickle(new_data_dict, args.aug_dataset_pickle)
     save_as_json(new_data_dict, args.aug_dataset_json)
 
@@ -49,11 +46,8 @@ def nmt_sampling(args):
 
     
 if __name__ == '__main__':
-    args = get_nmt_args(beam=1)
-    nmt_sampling(args)
-    
-#   args = get_nmt_args(beam=5)
-#   nmt_sampling(args)
+    nmt_sampling(beam=1)
+#   nmt_sampling(beam=5)
 
 #   tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
 #   output = get_sampling_dataset(args, args.train_datasets, args.train_dir, tokenizer, 'train')
