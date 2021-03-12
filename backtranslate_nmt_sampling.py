@@ -39,7 +39,7 @@ def nmt_sampling(beam=1):
     new_data_dict = gen_augmented_dataset('beam{0}'.format(beam), args.back_dropped_queries_dir, args.back_dropped_context_dir, 
                                           dropped_context_individual_length, sample_idx, new_answers)
     save_as_pickle(new_data_dict, args.aug_dataset_pickle)
-    save_as_json(new_data_dict, args.aug_dataset_json)
+    save_as_json(new_data_dict, args.aug_dataset_dict)
 
     # data_encodings = read_and_process(args, tokenizer, new_dataset_dict, data_dir, dataset_name, split_name)
     # return util.QADataset(data_encodings, train=(split_name=='train')), new_dataset_dict
