@@ -66,3 +66,11 @@ def get_nmt_args(beam=1):
     parser.add_argument('--aug_dataset_pickle', type=str, default='augmented_dataset_beam_{0}.pickle'.format(beam))
     args = parser.parse_args()
     return args
+
+def get_transformer_args(lang='de'):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--sample_queries_dir', type=str, default='transformer/QA/sample_queries.txt')
+    parser.add_argument('--sample_context_dir', type=str, default='transformer/QA/sample_context.txt')    
+    args = parser.parse_args()
+    return args
+
