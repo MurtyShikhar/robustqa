@@ -4,7 +4,8 @@ from nltk import tokenize
 # conda install spacy
 # python -m spacy download en_core_web_sm
 import spacy
-import sacrebleu
+import pickle
+import json
 from py_stringmatching import GeneralizedJaccard
 
 
@@ -273,6 +274,36 @@ def clean_sample_files(keep_index, queries_dir, context_dir, dropped_context_dir
   f.close()
   new_f.close()
   return sample_queries, sample_context
+
+def gen_augmented_dataset(backtranslated_queries, backtranslated_context, qids, new_answers):
+  new_data_dict = {'question': [], 'context': [], 'id': [], 'answer': []}
+  for question, context, qid, answer in zip(backtranslated_queries, backtranslated_context, qids, new_answers):
+      new_data_dict['question'].append(question)
+      new_data_dict['context'].append(context)
+      new_data_dict['id'].append(qid)
+      new_data_dict['answer'].append(answer)
+
+  print('Num of backtranslated queries:', len(backtranslated_queries))
+  print('Num of backtranslated context:', len(backtranslated_context))
+  print('Num of augmented samples:', len(sample_idx))
+  print('Num of new answers:', len(new_answers))
+  return new_data_dict
+
+def print_augmented_dataset(new_data_dict):
+   for i in range(10):
+      print("========== Augmented example {0} ==========".format(i))
+      print("question:", new_data_dict['question'][i])
+      print("context:", new_data_dict['context'][i])
+      print("id:", new_data_dict['id'][i])
+      print("answer:", new_data_dict['answer'][i])
+
+def save_as_pickle(new_data_dict, pickle_file):
+  with open(pickle_file, 'wb') as f:
+    pickle.dump(new_data_dict, f)
+
+def save_as_json(new_data_dict, json_file):
+  with open(json_file, 'w', encoding ='utf8') as f: 
+    json.dump(new_data_dict, f, indent = 4) 
 
 # def compute_backtrans_bleu(preds, refs):
 #   bleu = sacrebleu.corpus_bleu(preds, [refs])
