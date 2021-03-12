@@ -1,10 +1,7 @@
 from args import get_nmt_args
-import argparse
-from backtranslate_util import sample_dataset, get_keep_index, clean_lists, get_trans_context_answers, concat, concat_context, clean_sample_files
+from backtranslate_util import *
 import util
 import sacrebleu
-import json
-import pickle
 from transformers import DistilBertTokenizerFast
 
 # def prepare_eval_data(dataset_dict, tokenizer):
@@ -119,7 +116,7 @@ from transformers import DistilBertTokenizerFast
 #         util.save_pickle(tokenized_examples, cache_path)
 #     return tokenized_examples
 
-def gen_augmented_dataset(args, mode='nmt'):
+def nmt_sampling(args):
     # sampling
     dataset_dict, sample_idx, sample_context_individual_length, gold_answers, answer_locs = sample_dataset(args, args.train_datasets, args.train_dir,
                                                                                                        args.sample_queries_dir, args.sample_context_dir, 
@@ -158,32 +155,13 @@ def gen_augmented_dataset(args, mode='nmt'):
     backtranslated_queries = concat(args.back_dropped_queries_dir)
     backtranslated_context = concat_context(args.back_dropped_context_dir, dropped_context_individual_length)
     qids = ['augbeam5num'+ str(x) for x in sample_idx]
-
-    new_data_dict = {'question': [], 'context': [], 'id': [], 'answer': []}
-    for question, context, qid, answer in zip(backtranslated_queries, backtranslated_context, qids, new_answers):
-        new_data_dict['question'].append(question)
-        new_data_dict['context'].append(context)
-        new_data_dict['id'].append(qid)
-        new_data_dict['answer'].append(answer)
-
-    print('Num of backtranslated queries:', len(backtranslated_queries))
-    print('Num of backtranslated context:', len(backtranslated_context))
-    print('Num of augmented samples:', len(sample_idx))
-    print('Num of new answers:', len(new_answers))
+    new_data_dict = gen_augmented_dataset(backtranslated_queries, backtranslated_context, qids, new_answers)
     
     # test
-    for i in range(10):
-        print("========== Augmented example {0} ==========".format(i))
-        print("question:", new_data_dict['question'][i])
-        print("context:", new_data_dict['context'][i])
-        print("id:", new_data_dict['id'][i])
-        print("answer:", new_data_dict['answer'][i])
+    print_augmented_dataset(new_data_dict)
+    save_as_pickle(new_data_dict, args.aug_dataset_pickle)
+    save_as_json(new_data_dict, args.aug_dataset_json)
     
-    with open(args.aug_dataset_pickle, 'wb') as pickle_file:
-        pickle.dump(new_data_dict, pickle_file)
-
-    with open(args.aug_dataset_dict, 'w', encoding ='utf8') as json_file: 
-        json.dump(new_data_dict, json_file, indent = 4) 
 
 # for testing purpose can comment out the two lines below and check new_dataset_dict
 # data_encodings = read_and_process(args, tokenizer, new_dataset_dict, data_dir, dataset_name, split_name)
@@ -191,7 +169,10 @@ def gen_augmented_dataset(args, mode='nmt'):
 
 if __name__ == '__main__':
     args = get_nmt_args(beam=1)
+    nmt_sampling(args)
+    
 #    args = get_nmt_args(beam=5)
-    gen_augmented_dataset(args)
+#     nmt_sampling(args)
+
 #     tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
 #     output = get_sampling_dataset(args, args.train_datasets, args.train_dir, tokenizer, 'train')
