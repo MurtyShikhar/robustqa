@@ -1,5 +1,5 @@
 import torch
-from args import get_transformer_args
+from transformer_args import get_transformer_args
 from tqdm import tqdm
 # pip install Cython
 # pip install hydra-core
