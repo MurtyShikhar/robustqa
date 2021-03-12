@@ -28,7 +28,7 @@ def run(model, input_dir, output_dir):
 
     for line in tqdm(in_file, desc='Translating'):
         trans = model.translate(line)
-        out_file.write(trans)
+        out_file.write(trans + "\n")
 
     in_file.close()
     out_file.close()
