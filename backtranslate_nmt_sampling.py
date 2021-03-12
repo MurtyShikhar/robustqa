@@ -29,7 +29,7 @@ def nmt_sampling(beam=1):
                                                           gold_answers, answer_locs, args.jaccard_threshold)
 
     # compute queries and context BLEU
-    keep_index = [elem for idx, elem in enumerate(keep_index_1) if idx in keep_index_2]
+    keep_index = [elem for idx, elem in enumerate(keep_index_1) if idx in [elem for idx, elem in enumerate(keep_index_2) if idx in keep_index_3]]
     drop_sample_files(keep_index, args.sample_queries_dir, args.sample_context_dir, 
                       args.sample_queries_dropped_dir, args.sample_context_dropped_dir, sample_context_individual_length)
     compute_backtrans_bleu(args.sample_queries_dropped_dir, args.sample_context_dropped_dir,
