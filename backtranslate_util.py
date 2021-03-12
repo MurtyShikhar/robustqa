@@ -146,11 +146,11 @@ def compute_answer_span(context_sent, gold_answer, sim_measure = GeneralizedJacc
                 best_substring = ''.join(context_sent_token[i:n-j]).strip()
 
     start_pos = context_sent.find(best_substring)
-    return start_pos, best_substring
+    return start_pos, best_substring, best_jac_score
   
   
 def get_trans_context_answers(context_dir, sample_context_individual_length,
-                              gold_answers, answer_locs):
+                              gold_answers, answer_locs, threshold):
     """
         input:
             context_dir <file>: the back translated context file
@@ -163,6 +163,7 @@ def get_trans_context_answers(context_dir, sample_context_individual_length,
     in_file = open(context_dir, 'r')
     
     num_samples = len(sample_context_individual_length)
+    keep_index = []
     new_answers = []
 
     for i in range(num_samples):
@@ -171,22 +172,27 @@ def get_trans_context_answers(context_dir, sample_context_individual_length,
 
         new_start_idx = []
         new_curr_answers = []
+        jac_scores = []
         char_count = 0
 
         for j in range(sample_context_individual_length[i]):
             context_sent = in_file.readline().strip()
-
+            
             for k in range(len(curr_locs)):
                 if j == curr_locs[k]:
-                    start_pos, best_substring = compute_answer_span(context_sent, curr_answers[k])
+                    start_pos, best_substring, best_jac_score = compute_answer_span(context_sent, curr_answers[k])
                     new_start_idx.append(char_count + start_pos)
                     new_curr_answers.append(best_substring)
+                    jac_scores.append(best_jac_score)
             
             char_count += len(context_sent + " ")
-        new_answers.append(dict({'answer_start': new_start_idx, 'text': new_curr_answers}))
+        
+        if max(jac_scores) > threshold:
+          keep_index.append(i)
+          new_answers.append(dict({'answer_start': new_start_idx, 'text': new_curr_answers}))
     
     in_file.close()
-    return new_answers
+    return keep_index, new_answers
   
   
 def concat(file_dir):
