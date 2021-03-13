@@ -21,7 +21,7 @@ def get_train_test_args():
     parser.add_argument('--do-eval', action='store_true')
     parser.add_argument('--sub-file', type=str, default='')
     parser.add_argument('--visualize-predictions', action='store_true')
-    parser.add_argument('--eval-every', type=int, default=5000)
+    parser.add_argument('--eval-every', type=int, default=50)
     parser.add_argument('--sample_prob', type=float, default=0.1)
     
     # where to save the sampling (with sampling prob) queries and context
@@ -49,5 +49,8 @@ def get_train_test_args():
     # where to store augmented dataset
     parser.add_argument('--aug_dataset_dict', type=str, default='augmented_dataset_beam_5.json')
     parser.add_argument('--aug_dataset_pickle', type=str, default='augmented_dataset_beam_5.pickle')
+
+    # whether add backtranslated data to finetune
+    parser.add_argument('--train_with_backtranslate', type=bool, default=True)
     args = parser.parse_args()
     return args

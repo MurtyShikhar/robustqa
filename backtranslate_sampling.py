@@ -6,6 +6,7 @@ import sacrebleu
 import json
 import pickle
 from transformers import DistilBertTokenizerFast
+import pandas as pd
 
 # def prepare_eval_data(dataset_dict, tokenizer):
 #     tokenized_examples = tokenizer(dataset_dict['question'],

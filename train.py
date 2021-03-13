@@ -14,7 +14,8 @@ from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import RandomSampler, SequentialSampler
 from args import get_train_test_args
-from backtranslate_sampling import get_sampling_dataset
+import pickle
+# from backtranslate_sampling import get_sampling_dataset
 
 from tqdm import tqdm
 
@@ -129,7 +130,7 @@ def read_and_process(args, tokenizer, dataset_dict, dir_name, dataset_name, spli
             tokenized_examples = prepare_train_data(dataset_dict, tokenizer)
         else:
             tokenized_examples = prepare_eval_data(dataset_dict, tokenizer)
-        util.save_pickle(tokenized_examples, cache_path)
+        # util.save_pickle(tokenized_examples, cache_path)
     return tokenized_examples
 
 
@@ -249,6 +250,10 @@ def get_dataset(args, datasets, data_dir, tokenizer, split_name):
         dataset_name += f'_{dataset}'
         dataset_dict_curr = util.read_squad(f'{data_dir}/{dataset}')
         dataset_dict = util.merge(dataset_dict, dataset_dict_curr)
+    if args.train_with_backtranslate and split_name == "train": 
+        augment_dataset_dict = util.load_pickle(args.aug_dataset_pickle)
+        dataset_dict = util.merge(dataset_dict, augment_dataset_dict)
+        print("Concatenated with backtranslate data.")
     data_encodings = read_and_process(args, tokenizer, dataset_dict, data_dir, dataset_name, split_name)
     return util.QADataset(data_encodings, train=(split_name=='train')), dataset_dict
 
