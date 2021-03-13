@@ -27,7 +27,7 @@ def get_train_test_args():
     parser.add_argument('--do-finetune', action='store_true')
     parser.add_argument('--sub-file', type=str, default='')
     parser.add_argument('--visualize-predictions', action='store_true')
-    parser.add_argument('--eval-every', type=int, default=50)
+    parser.add_argument('--eval-every', type=int, default=200)
     parser.add_argument('--aug_dataset_pickle', type=str, default='augmented_dataset_beam_1.pickle')
     parser.add_argument('--train-with-backtranslate', action='store_true')
     args = parser.parse_args()
