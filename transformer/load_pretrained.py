@@ -42,9 +42,10 @@ def run(model, input_dir, output_dir, src_tgt):
     in_file = open(input_dir, 'r').readlines()
     out_file = open(output_dir, 'w')
    
-    for line in tqdm(len(in_file), desc='Translating: ' + src_tgt):
-        trans = model.translate(line)
-        out_file.write(trans + "\n")
+    with tqdm(len(in_file), desc='Translating: ' + src_tgt):
+        for line in in_file:
+            trans = model.translate(line)
+            out_file.write(trans + "\n")
 
     in_file.close()
     out_file.close()
