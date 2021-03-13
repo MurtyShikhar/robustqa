@@ -33,13 +33,14 @@ def nmt_sampling(beam=1):
     print('Num of examples after filtering by Jaccard similarity:', len(keep_index_3))
 
     # compute queries and context BLEU
-    keep_index = [elem for idx, elem in enumerate(keep_index_1) if idx in [elem for idx, elem in enumerate(keep_index_2) if idx in keep_index_3]]
+    keep_index_23 = [elem for idx, elem in enumerate(keep_index_2) if idx in keep_index_3]
+    keep_index = [elem for idx, elem in enumerate(keep_index_1) if idx in keep_index_23]
+    
+    # not sure why the following line end up being a dead loop
+    # keep_index = [elem for idx, elem in enumerate(keep_index_1) if idx in [elem for idx, elem in enumerate(keep_index_2) if idx in keep_index_3]]
     
     # for sanity check
-    print("Keep index = " + str(len(keep_index)))
     print("Start dropping files: ")
-    print(str(args.sample_queries_dir))
-    print(str(args.sample_context_dir))
     
     drop_files(keep_index, args.sample_queries_dir, args.sample_context_dir, 
                args.sample_queries_dropped_dir, args.sample_context_dropped_dir, sample_context_individual_length)
