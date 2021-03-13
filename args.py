@@ -70,8 +70,8 @@ def get_nmt_args(beam=1):
     parser.add_argument('--sample_context_dropped_dir', type=str, default='2_layer_nmt/QA/sample_context_beam_{0}_dropped.txt'.format(beam))
     
     # where to store augmented dataset
-    parser.add_argument('--aug_dataset_dict', type=str, default='augmented_dataset_beam_5.json')
-    parser.add_argument('--aug_dataset_pickle', type=str, default='augmented_dataset_beam_5.pickle')
+    parser.add_argument('--aug_dataset_dict', type=str, default='augmented_dataset_beam_{0}.json'.format(beam))
+    parser.add_argument('--aug_dataset_pickle', type=str, default='augmented_dataset_beam_{0}.pickle'.format(beam))
 
     # whether add backtranslated data to finetune
     parser.add_argument('--train_with_backtranslate', type=bool, default=True)
