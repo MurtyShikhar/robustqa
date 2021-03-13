@@ -162,7 +162,7 @@ def get_trans_context_answers(context_dir, sample_context_individual_length,
     """
     in_file = open(context_dir, 'r')
     # for sanity check 
-    out_file = open('2_layer_nmt/QA/jaccard_similarity.txt', 'w')
+    out_file = open('2_layer_nmt/QA/jaccard_similarity_beam_1.txt', 'w')
     
     num_samples = len(sample_context_individual_length)
     keep_index = []
