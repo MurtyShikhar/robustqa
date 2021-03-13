@@ -33,6 +33,10 @@ def nmt_sampling(beam=1):
     print('Num of examples after filtering by Jaccard similarity:', len(keep_index_3))
 
     # compute queries and context BLEU
+    print(keep_index_3[:10])
+    print(keep_index_2[:10])
+    print(keep_index_1[:10])
+    
     keep_index_23 = [elem for idx, elem in enumerate(keep_index_2) if idx in keep_index_3]
     keep_index = [elem for idx, elem in enumerate(keep_index_1) if idx in keep_index_23]
     
