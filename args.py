@@ -22,7 +22,10 @@ def get_train_test_args():
     parser.add_argument('--sub-file', type=str, default='')
     parser.add_argument('--visualize-predictions', action='store_true')
     parser.add_argument('--eval-every', type=int, default=50)
-    parser.add_argument('--sample_prob', type=float, default=0.1)
+    parser.add_argument('--aug_dataset_pickle', type=str, default='augmented_dataset_beam_5.pickle')
+    parser.add_argument('--train_with_backtranslate', type=bool, default=True)
+    args = parser.parse_args()
+    return args
     
 def get_nmt_args(beam=1):
     parser = argparse.ArgumentParser()
