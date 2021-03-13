@@ -224,6 +224,8 @@ def drop_files(keep_index, queries_dir, context_dir, dropped_queries_dir, droppe
   output_q_file = open(dropped_queries_dir, 'w')
   output_c_file = open(dropped_context_dir, 'w')
   num_samples = len(sample_context_individual_length)
+  
+  print("In drop_files function, number of samples:" + str(num_samples))
 
   for i in range(num_samples):
     query = q_file.readline()
