@@ -27,7 +27,7 @@ def run(model, input_dir, output_dir, src, dest):
 
 
 if __name__ == '__main__':
-    print("========= Translating queries =========")
-    queries_args = get_queries_args(lang='es')
-    en_es(queries_args.input_dir, queries_args.trans_dir)
-    es_en(queries_args.trans_dir, queries_args.backtrans_dir)
+    print("========= Translating context =========")
+    context_args = get_context_args(lang='es')
+    en_es(context_args.input_dir, context_args.trans_dir)
+    es_en(context_args.trans_dir, context_args.backtrans_dir)
