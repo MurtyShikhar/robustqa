@@ -4,6 +4,7 @@ from tqdm import tqdm
 # pip install Cython
 # pip install hydra-core
 # pip install sacremoses
+# pip install fastBPE
 
 def en_de(input_dir, output_dir):
     en2de = torch.hub.load('pytorch/fairseq', 'transformer.wmt19.en-de',
@@ -40,7 +41,7 @@ def ru_en(input_dir, output_dir):
 def run(model, input_dir, output_dir, src_tgt):
     in_file = open(input_dir, 'r')
     out_file = open(output_dir, 'w')
-    
+   
     for line in tqdm(in_file.readlines(), desc='Translating: ' + src_tgt):
         trans = model.translate(line)
         out_file.write(trans + "\n")
@@ -52,12 +53,12 @@ def run(model, input_dir, output_dir, src_tgt):
 
 if __name__ == '__main__':
     args = get_transformer_args(lang='de')
-    print("========= Translating queries (de) =========")
-    en_de(args.queries_input_dir, args.queries_trans_dir)
-    de_en(args.queries_trans_dir, args.queries_backtrans_dir)
-#     print("========= Translating context (de) =========")
+#    print("========= Translating queries (de) =========")
+#    en_de(args.queries_input_dir, args.queries_trans_dir)
+#    de_en(args.queries_trans_dir, args.queries_backtrans_dir)
+    print("========= Translating context (de) =========")
 #     en_de(args.context_input_dir, args.context_trans_dir)
-#     de_en(args.context_trans_dir, args.context_backtrans_dir)
+    de_en(args.context_trans_dir, args.context_backtrans_dir)
 
 #     args = get_transformer_args(lang='ru')
 #     print("========= Translating queries (ru) =========")

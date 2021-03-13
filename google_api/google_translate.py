@@ -17,7 +17,7 @@ def run(model, input_dir, output_dir, src, dest):
     in_file = open(input_dir, 'r')
     out_file = open(output_dir, 'w')
     
-    for line in tqdm(in_file, desc='Translating'):
+    for line in tqdm(in_file.readlines(), desc='Translating'):
         trans = model.translate(line, src = src, dest = dest).text
         out_file.write(trans + "\n")
 
