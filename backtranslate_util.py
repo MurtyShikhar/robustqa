@@ -199,9 +199,9 @@ def get_trans_context_answers(context_dir, sample_context_individual_length,
             
           char_count += len(context_sent + " ")
         
-        #if max(jac_scores) > threshold:
-        #  keep_index.append(i)
-        #  new_answers.append(dict({'answer_start': new_start_idx, 'text': new_curr_answers}))
+        if len(jac_scores) > 0 and max(jac_scores) > threshold:
+         keep_index.append(i)
+         new_answers.append(dict({'answer_start': new_start_idx, 'text': new_curr_answers}))
     
     in_file.close()
     out_file.close()
