@@ -243,13 +243,14 @@ class Trainer():
         return best_scores
 
 def get_dataset(args, datasets, data_dir, tokenizer, split_name):
-    datasets = datasets.split(',')
     dataset_dict = None
-    dataset_name=''
-    for dataset in datasets:
-        dataset_name += f'_{dataset}'
-        dataset_dict_curr = util.read_squad(f'{data_dir}/{dataset}')
-        dataset_dict = util.merge(dataset_dict, dataset_dict_curr)
+    dataset_name = ''
+    if datasets != "":
+        datasets = datasets.split(',')
+        for dataset in datasets:
+            dataset_name += f'_{dataset}'
+            dataset_dict_curr = util.read_squad(f'{data_dir}/{dataset}')
+            dataset_dict = util.merge(dataset_dict, dataset_dict_curr)
     if args.train_with_backtranslate and split_name == "train" and args.do_finetune: 
         augment_dataset_dict = util.load_pickle(args.aug_dataset_pickle)
         dataset_dict = util.merge(dataset_dict, augment_dataset_dict)
