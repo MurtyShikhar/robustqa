@@ -46,6 +46,8 @@ def write_queries(queries, output_dir):
           if not q.endswith('?'):
             q += '?'
           f.write(q + '\n')
+          
+    f.close()
 
           
 def write_context(context, gold_answers, output_dir):
