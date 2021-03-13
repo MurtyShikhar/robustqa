@@ -161,6 +161,8 @@ def get_trans_context_answers(context_dir, sample_context_individual_length,
             new_answers: list of new_answers
     """
     in_file = open(context_dir, 'r')
+    # for sanity check 
+    out_file = open('2_layer_nmt/QA/jaccard_similarity.txt', 'w')
     
     num_samples = len(sample_context_individual_length)
     keep_index = []
@@ -174,30 +176,35 @@ def get_trans_context_answers(context_dir, sample_context_individual_length,
         new_curr_answers = []
         jac_scores = []
         char_count = 0
+        
+        out_file.write("No. Sample : " + str(i) + "\n")
 
         for j in range(sample_context_individual_length[i]):
+          out_file.write("No. Sentence in Sample Context : " + str(j) + "\n")
           context_sent = in_file.readline().strip()
-          print(context_sent)
+          
           for k in range(len(curr_locs)):
             if j == curr_locs[k]:
               start_pos, best_substring, best_jac_score = compute_answer_span(context_sent, curr_answers[k])
               new_start_idx.append(char_count + start_pos)
               new_curr_answers.append(best_substring)
               jac_scores.append(best_jac_score)
+              
+              # for sanity check
+              out_file.write("Context Sentence: " + context_sent + "\n")
+              out_file.write("Gold Answer: " + curr_answers[k] + "\n")
+              out_file.write("Estimated Answer: " + best_substring + "\n")
+              out_file.write("Jaccard Score: " + str(best_score) + "\n")
+              out_file.write("\n")
             
           char_count += len(context_sent + " ")
-          
-        # for debug 
-        print("gold answer: " + str(curr_answers))
-        print("Best substring: " + str(new_curr_answers))
-        print("Best jaccard score: " + str(jac_scores))
-        print("\n")
         
-        if max(jac_scores) > threshold:
-          keep_index.append(i)
-          new_answers.append(dict({'answer_start': new_start_idx, 'text': new_curr_answers}))
+        #if max(jac_scores) > threshold:
+        #  keep_index.append(i)
+        #  new_answers.append(dict({'answer_start': new_start_idx, 'text': new_curr_answers}))
     
     in_file.close()
+    out_file.close()
     return keep_index, new_answers
   
   
