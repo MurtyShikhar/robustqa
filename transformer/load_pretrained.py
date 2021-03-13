@@ -4,6 +4,7 @@ from tqdm import tqdm
 # pip install Cython
 # pip install hydra-core
 # pip install sacremoses
+# pip install fastBPE
 
 def en_de(input_dir, output_dir):
     en2de = torch.hub.load('pytorch/fairseq', 'transformer.wmt19.en-de',
