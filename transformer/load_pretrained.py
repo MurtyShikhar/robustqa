@@ -56,9 +56,9 @@ if __name__ == '__main__':
 #    print("========= Translating queries (de) =========")
 #    en_de(args.queries_input_dir, args.queries_trans_dir)
 #    de_en(args.queries_trans_dir, args.queries_backtrans_dir)
-     print("========= Translating context (de) =========")
+    print("========= Translating context (de) =========")
 #     en_de(args.context_input_dir, args.context_trans_dir)
-     de_en(args.context_trans_dir, args.context_backtrans_dir)
+    de_en(args.context_trans_dir, args.context_backtrans_dir)
 
 #     args = get_transformer_args(lang='ru')
 #     print("========= Translating queries (ru) =========")
