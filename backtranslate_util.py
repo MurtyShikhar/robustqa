@@ -194,7 +194,7 @@ def get_trans_context_answers(context_dir, sample_context_individual_length,
               out_file.write("Context Sentence: " + context_sent + "\n")
               out_file.write("Gold Answer: " + curr_answers[k] + "\n")
               out_file.write("Estimated Answer: " + best_substring + "\n")
-              out_file.write("Jaccard Score: " + str(best_score) + "\n")
+              out_file.write("Jaccard Score: " + str(best_jac_score) + "\n")
               out_file.write("\n")
             
           char_count += len(context_sent + " ")
