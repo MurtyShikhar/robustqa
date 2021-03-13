@@ -10,7 +10,7 @@ def en_de(input_dir, output_dir):
                        checkpoint_file='model1.pt', tokenizer='moses', bpe='fastbpe')
     en2de.eval()
     en2de.cuda()
-    run(en2de, input_dir, output_dir)
+    run(en2de, input_dir, output_dir, "en to de")
 
     
 def de_en(input_dir, output_dir):
@@ -18,7 +18,7 @@ def de_en(input_dir, output_dir):
                        checkpoint_file='model1.pt', tokenizer='moses', bpe='fastbpe')
     de2en.eval()
     de2en.cuda()
-    run(de2en, input_dir, output_dir)
+    run(de2en, input_dir, output_dir, "de to en")
     
 
 def en_ru(input_dir, output_dir):
@@ -26,7 +26,7 @@ def en_ru(input_dir, output_dir):
                        checkpoint_file='model1.pt', tokenizer='moses', bpe='fastbpe')
     en2ru.eval()
     en2ru.cuda()
-    run(en2ru, input_dir, output_dir)
+    run(en2ru, input_dir, output_dir, "en to ru")
     
     
 def ru_en(input_dir, output_dir):
@@ -34,14 +34,14 @@ def ru_en(input_dir, output_dir):
                        checkpoint_file='model1', tokenizer='moses', bpe='fastbpe')
     ru2en.eval()
     ru2en.cuda()
-    run(ru2en, input_dir, output_dir)
+    run(ru2en, input_dir, output_dir, "ru to en")
     
     
-def run(model, input_dir, output_dir):
+def run(model, input_dir, output_dir, src_tgt):
     in_file = open(input_dir, 'r')
     out_file = open(output_dir, 'w')
     
-    for line in tqdm(in_file.readlines(), desc='Translating: '):
+    for line in tqdm(in_file.readlines(), desc='Translating: ' + src_tgt):
         trans = model.translate(line)
         out_file.write(trans + "\n")
 
