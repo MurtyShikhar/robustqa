@@ -1,8 +1,72 @@
-from args_beam_1 import get_train_test_args
-import argparse
-from backtranslate_util import sample_dataset, concat_context, concat_queries, get_empty_trans_index, drop_empty_trans, compute_backtrans_bleu
-import util
-from transformers import DistilBertTokenizerFast
+# def get_trans_context_answers(context_dir, sample_context_individual_length,
+#                               gold_answers, answer_locs, output_context_dir):
+#     """
+#         input:
+#             context_dir <file>: the back translated context file
+#             sample_context_individual_length list<integer>: number of sentences in each context
+#             gold_answers list<list<string>>: the list of gold answers
+#             answer_locs list<list<integer>>: the list of answer locs
+#             output_context_dir <file>: concatenated context
+#         returns:
+#             new_answers: list of new_answers
+#     """
+#     in_file = open(context_dir, 'r')
+#     out_file = open(output_context_dir, 'w')
+
+#     num_samples = len(sample_context_individual_length)
+#     new_answers = []
+
+#     for i in range(num_samples):
+#         curr_answers = gold_answers[i]['text']
+#         curr_locs = answer_locs[i]
+
+#         new_start_idx = []
+#         new_curr_answers = []
+#         curr_context = ''
+#         char_count = 0
+
+#         for j in range(sample_context_individual_length[i]):
+#             context_sent = in_file.readline().strip()
+
+#             for k in range(len(curr_locs)):
+#                 if j == curr_locs[k]:
+#                     start_pos, best_substring = compute_answer_span(context_sent, curr_answers[k])
+#                     new_start_idx.append(char_count + start_pos)
+#                     new_curr_answers.append(best_substring)
+            
+#             curr_context += context_sent + " "
+#             char_count += len(context_sent + " ")
+
+#         new_answers.append(dict({'answer_start': new_start_idx, 'text': new_curr_answers}))
+#         out_file.write(curr_context + '\n')
+    
+#     in_file.close()
+#     out_file.close()
+#     return new_answers
+
+
+# def concat_queries(queries_dir):
+#     output_queries = []
+#     f = open(queries_dir, 'r')
+#     whole_queries = f.readlines()
+#     for q in whole_queries:
+#         output_queries.append(q)
+#     return output_queries
+
+# def compute_backtrans_bleu(preds, refs):
+#   bleu = sacrebleu.corpus_bleu(preds, [refs])
+#   return bleu.score
+
+        
+# def compute_backtrans_bleu(original_file, backtrans_file):
+#   ref_file = open(original_file, 'r')
+#   pred_file = open(backtrans_file, 'r')
+  
+#   refs = [line.strip() for line in ref_file]
+#   preds = [line.strip() for line in pred_file]
+#   bleu = sacrebleu.corpus_bleu(preds, [refs])
+#   return bleu.score
+
 
 # def prepare_eval_data(dataset_dict, tokenizer):
 #     tokenized_examples = tokenizer(dataset_dict['question'],
@@ -31,10 +95,9 @@ from transformers import DistilBertTokenizerFast
 #         tokenized_examples["offset_mapping"][i] = [
 #             (o if sequence_ids[k] == 1 else None)
 #             for k, o in enumerate(tokenized_examples["offset_mapping"][i])
-#         ] 
+#         ]
 
 #     return tokenized_examples
-
 
 
 # def prepare_train_data(dataset_dict, tokenizer):
@@ -103,6 +166,7 @@ from transformers import DistilBertTokenizerFast
 #     print(f"Preprocessing not completely accurate for {inaccurate}/{total} instances")
 #     return tokenized_examples
 
+
 # def read_and_process(args, tokenizer, dataset_dict, dir_name, dataset_name, split):
 #     #TODO: cache this if possible
 #     cache_path = f'{dir_name}/{dataset_name}_encodings.pt'
@@ -115,61 +179,3 @@ from transformers import DistilBertTokenizerFast
 #             tokenized_examples = prepare_eval_data(dataset_dict, tokenizer)
 #         util.save_pickle(tokenized_examples, cache_path)
 #     return tokenized_examples
-
-#def get_sampling_dataset(args, datasets, data_dir, tokenizer, split_name):
-    # for testing purpose can de-function the code and uncomment the line below
-args = get_train_test_args() 
-dataset_dict, sample_idx, sample_context_individual_length, gold_answers, answer_locs = sample_dataset(args, args.train_datasets, args.train_dir,
-                                                                                                       args.sample_prob, args.seed,
-                                                                                                       args.sample_queries_dir, args.sample_context_dir)
-
-print('Sampled queries are being saved at:', args.sample_queries_dir)         
-print('Sampled context are being saved at:', args.sample_context_dir)
-print('Num of examples sampled:', len(sample_idx))
-
-[sample_idx, sample_context_individual_length, gold_answers, answer_locs] = drop_empty_trans(args.trans_queries_dir, args.trans_context_dir, sample_context_individual_length,
-                                                                             args.dropped_queries_dir, args.dropped_context_dir, 
-                                                                             [sample_idx, sample_context_individual_length, gold_answers, answer_locs])
-print('Num of non-empty examples after translation:', len(sample_idx))
-
-
-[sample_idx, sample_context_individual_length, gold_answers, answer_locs] = drop_empty_trans(args.back_trans_queries_dir, args.back_trans_context_dir, sample_context_individual_length,
-                                                                             args.back_dropped_queries_dir, args.back_dropped_context_dir, 
-                                                                             [sample_idx, sample_context_individual_length, gold_answers, answer_locs])
-print('Num of non-empty examples after back translation:', len(sample_idx))
-
-queries_bleu = compute_backtrans_bleu(args.sample_queries_dir, args.back_dropped_queries_dir)
-print('Queries back translation BLEU: {}'.format(queries_bleu))
-
-context_bleu = compute_backtrans_bleu(args.sample_context_dir, args.back_dropped_context_dir)
-print('Context back translation BLEU: {}'.format(context_bleu))
-
-backtranslated_queries = concat_queries(args.backtranslate_queries_dir)
-backtranslated_context = concat_context(args.backtranslate_context_dir, sample_context_individual_length)
-
-new_dataset_dict = dict(dataset_dict)
-
-for (index, replacement) in zip(sample_idx, backtranslated_queries):
-    new_dataset_dict['question'][index] = replacement
-
-for (index, replacement) in zip(sample_idx, backtranslated_context):
-    new_dataset_dict['context'][index] = replacement
-
-    # for testing purpose can comment out the two lines below and check new_dataset_dict
-    # data_encodings = read_and_process(args, tokenizer, new_dataset_dict, data_dir, dataset_name, split_name)
-    # return util.QADataset(data_encodings, train=(split_name=='train')), dataset_dict
-
-# if __name__ == '__main__':
-#     args = get_train_test_args()
-#     tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
-#     output = get_sampling_dataset(args, args.train_datasets, args.train_dir, tokenizer, 'train')
-
-
-
-
-
-
-    
-
-
-
