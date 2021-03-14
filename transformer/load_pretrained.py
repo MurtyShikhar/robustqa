@@ -39,12 +39,13 @@ def ru_en(input_dir, output_dir):
     
     
 def run(model, input_dir, output_dir, src_tgt):
-    in_file = open(input_dir, 'r').readlines()
+    #in_file = open(input_dir, 'r').readlines()
+    in_file = open(input_dir, 'r')
     out_file = open(output_dir, 'w')
    
 #     with tqdm(total=len(in_file), desc='Translating: ' + src_tgt) as progress_bar:
-    for line in in_file:
-        print("run")
+    for line in tqdm(in_file.readlines(), desc='Translating: ' + src_tgt):
+        # print("run")
         trans = model.translate(line.rstrip('\n'))
         out_file.write(trans + "\n")
 
