@@ -42,10 +42,11 @@ def run(model, input_dir, output_dir, src_tgt):
     in_file = open(input_dir, 'r').readlines()
     out_file = open(output_dir, 'w')
    
-    with tqdm(total=len(in_file), desc='Translating: ' + src_tgt) as progress_bar:
-        for line in in_file:
-            trans = model.translate(line.strip())
-            out_file.write(trans + "\n")
+#     with tqdm(total=len(in_file), desc='Translating: ' + src_tgt) as progress_bar:
+    for line in in_file:
+        print("run")
+        trans = model.translate(line.rstrip('\n'))
+        out_file.write(trans + "\n")
 
     in_file.close()
     out_file.close()
