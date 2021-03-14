@@ -33,15 +33,15 @@ def nmt_sampling(beam=1):
     print('Num of examples after filtering by Jaccard similarity:', len(keep_index_3))
 
     # compute queries and context BLEU
-    print(keep_index_3[:10])
-    print(keep_index_2[:10])
-    print(keep_index_1[:10])
+#     print(keep_index_3[:10])
+#     print(keep_index_2[:10])
+#     print(keep_index_1[:10])
     
-    keep_index_23 = [elem for idx, elem in enumerate(keep_index_2) if idx in keep_index_3]
-    keep_index = [elem for idx, elem in enumerate(keep_index_1) if idx in keep_index_23]
+#     keep_index_23 = [elem for idx, elem in enumerate(keep_index_2) if idx in keep_index_3]
+#     keep_index = [elem for idx, elem in enumerate(keep_index_1) if idx in keep_index_23]
     
-    # not sure why the following line end up being a dead loop
-    # keep_index = [elem for idx, elem in enumerate(keep_index_1) if idx in [elem for idx, elem in enumerate(keep_index_2) if idx in keep_index_3]]
+#     not sure why the following line end up being a dead loop
+    keep_index = [elem for idx, elem in enumerate(keep_index_1) if idx in [elem1 for idx1, elem1 in enumerate(keep_index_2) if idx1 in keep_index_3]]
     
     # for sanity check
     print("Start dropping files: ")
@@ -62,8 +62,8 @@ def nmt_sampling(beam=1):
 
     
 if __name__ == '__main__':
-#    nmt_sampling(beam=1)
-    nmt_sampling(beam=5) 
+    nmt_sampling(beam=1)
+#     nmt_sampling(beam=5) 
 
 #   tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
 #   output = get_sampling_dataset(args, args.train_datasets, args.train_dir, tokenizer, 'train')
