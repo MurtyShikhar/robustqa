@@ -11,9 +11,9 @@ def transformer_google_sampling(lang='de'):
                                                                                           args.sample_queries_dir, args.sample_context_dir, 
                                                                                           args.sample_prob, args.seed, max_num=10000)
   # estimate new answers
-  keep_index, new_answers = get_trans_context_answers(args.backtrans_context_dir, sample_context_individual_length, 
+  keep_index, new_answers = get_trans_context_answers(args.back_trans_context_dir, sample_context_individual_length, 
                                                       gold_answers, answer_locs, args.jaccard_threshold)
-  drop_files(keep_index, args.backtrans_queries_dir, args.backtrans_context_dir,
+  drop_files(keep_index, args.back_trans_queries_dir, args.back_trans_context_dir,
              args.jaccard_queries_dir, args.jaccard_context_dir, sample_context_individual_length)
   drop_files(keep_index, args.sample_queries_dir, args.sample_context_dir, 
              args.sample_queries_dropped_dir, args.sample_context_dropped_dir, sample_context_individual_length)
