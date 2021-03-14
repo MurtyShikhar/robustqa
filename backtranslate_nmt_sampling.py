@@ -34,9 +34,9 @@ def nmt_sampling(beam=1):
 
     # compute queries and context BLEU
     
-#     keep_index_23 = [elem for idx, elem in enumerate(keep_index_2) if idx in keep_index_3]
-#     keep_index = [elem for idx, elem in enumerate(keep_index_1) if idx in keep_index_23]
-    keep_index = [elem for idx, elem in enumerate(keep_index_1) if idx in [elem1 for idx1, elem1 in enumerate(keep_index_2) if idx1 in keep_index_3]]
+    keep_index_23 = [elem for idx, elem in enumerate(keep_index_2) if idx in keep_index_3]
+    keep_index = [elem for idx, elem in enumerate(keep_index_1) if idx in keep_index_23]
+    # keep_index = [elem for idx, elem in enumerate(keep_index_1) if idx in [elem1 for idx1, elem1 in enumerate(keep_index_2) if idx1 in keep_index_3]]
     
     # for sanity check
     print("Start dropping files: ")
@@ -53,7 +53,6 @@ def nmt_sampling(beam=1):
 #     save_as_json(new_data_dict, args.aug_dataset_dict)
 
 #     data_encodings = read_and_process(args, tokenizer, new_dataset_dict, data_dir, dataset_name, split_name)
-#     return util.QADataset(data_encodings, train=(split_name=='train')), new_dataset_dict
 
     
 if __name__ == '__main__':
