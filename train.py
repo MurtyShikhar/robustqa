@@ -299,7 +299,9 @@ def main():
         model.to(args.device)
         train_dataset, _ = get_dataset(args, args.finetune_datasets, args.finetune_dir, tokenizer, 'train')
         log.info("Preparing Finetune Validation Data...")
-        val_dataset, val_dict = get_dataset(args, args.finetune_datasets, args.finetune_val_dir, tokenizer, 'val')
+        val_dataset, val_dict = get_dataset(args, args.train_datasets, args.val_dir, tokenizer, 'val')
+        #try val on indomain data only
+        #val_dataset, val_dict = get_dataset(args, args.finetune_datasets, args.finetune_val_dir, tokenizer, 'val')
         train_loader = DataLoader(train_dataset,
                                 batch_size=args.batch_size,
                                 sampler=RandomSampler(train_dataset))
