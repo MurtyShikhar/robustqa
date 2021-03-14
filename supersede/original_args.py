@@ -8,8 +8,7 @@ def get_train_test_args():
     parser.add_argument('--num-visuals', type=int, default=10)
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--save-dir', type=str, default='save/')
-    parser.add_argument('--baseline-save-dir', type=str, default='save/baseline-01')
-    parser.add_argument('--finetune-save-dir', type=str, default='save/finetune-01')
+    
     parser.add_argument('--train', action='store_true')
     parser.add_argument('--eval', action='store_true')
     parser.add_argument('--train-datasets', type=str, default='squad,nat_questions,newsqa')
@@ -17,19 +16,15 @@ def get_train_test_args():
     parser.add_argument('--recompute-features', action='store_true')
     parser.add_argument('--train-dir', type=str, default='datasets/indomain_train')
     parser.add_argument('--val-dir', type=str, default='datasets/indomain_val')
-    parser.add_argument('--finetune-dir', type=str, default='datasets/oodomain_train')
-    parser.add_argument('--finetune-val-dir', type=str, default='datasets/oodomain_val')
+    
     parser.add_argument('--eval-dir', type=str, default='datasets/oodomain_test')
-    parser.add_argument('--finetune-datasets', type=str, default='race,relation_extraction,duorc')
     parser.add_argument('--eval-datasets', type=str, default='race,relation_extraction,duorc')
     parser.add_argument('--do-train', action='store_true')
     parser.add_argument('--do-eval', action='store_true')
-    parser.add_argument('--do-finetune', action='store_true')
     parser.add_argument('--sub-file', type=str, default='')
     parser.add_argument('--visualize-predictions', action='store_true')
     parser.add_argument('--eval-every', type=int, default=200)
-    parser.add_argument('--aug_dataset_pickle', type=str, default='augmented_dataset_beam_1.pickle')
-    parser.add_argument('--train-with-backtranslate', action='store_true')
+    parser.add_argument('--sample_prob', type=float, default=0.1)
     args = parser.parse_args()
     return args
     
@@ -85,9 +80,29 @@ def get_transformer_args(lang='de'):
     parser.add_argument('--sample_prob', type=float, default=0.1)
     parser.add_argument('--seed', type=int, default=42)
     
+    # where to save the sampling (with sampling prob) queries and context
     parser.add_argument('--sample_queries_dir', type=str, default='transformer/QA/sample_queries.txt')
     parser.add_argument('--sample_context_dir', type=str, default='transformer/QA/sample_context.txt')
     
+    # where to retrieve the back translated queries and context
+    parser.add_argument('--back_trans_queries_dir', type=str, default='transformer/QA/trans_{0}_en_queries.txt'.format(lang))
+    parser.add_argument('--back_trans_context_dir', type=str, default='transformer/QA/trans_{0}_en_context.txt'.format(lang))
+
+     # jaccard similarity filtering
+    parser.add_argument('--jaccard_threshold', type=float, default=0.65)
+    parser.add_argument('--jaccard_queries_dir', type=str, default='transformer/QA/trans_{0}_en_queries_jaccard.txt'.format(lang))
+    parser.add_argument('--jaccard_context_dir', type=str, default='transformer/QA/trans_{0}_en_context_jaccard.txt'.format(lang))
+    
+    # where to store dropped sample files
+    parser.add_argument('--sample_queries_dropped_dir', type=str, default='transformer/QA/sample_queries_{0}_dropped.txt'.format(lang))
+    parser.add_argument('--sample_context_dropped_dir', type=str, default='transformer/QA/sample_context_{0}_dropped.txt'.format(lang))
+    
+    # where to store augmented dataset
+    parser.add_argument('--aug_dataset_dict', type=str, default='augmented_dataset_transformer_{0}.json'.format(lang))
+    parser.add_argument('--aug_dataset_pickle', type=str, default='augmented_dataset_transformer_{0}.pickle'.format(lang))
+
+    # whether add backtranslated data to finetune
+#     parser.add_argument('--train_with_backtranslate', type=bool, default=True)  
     args = parser.parse_args()
     return args
 
