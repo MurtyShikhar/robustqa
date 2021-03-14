@@ -44,7 +44,7 @@ def run(model, input_dir, output_dir, src_tgt):
    
     with tqdm(total=len(in_file), desc='Translating: ' + src_tgt) as progress_bar:
         for line in in_file:
-            trans = model.translate(line)
+            trans = model.translate(line.strip())
             out_file.write(trans + "\n")
 
     in_file.close()
