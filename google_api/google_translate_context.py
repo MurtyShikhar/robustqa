@@ -1,5 +1,5 @@
 import torch
-from args import get_queries_args, get_context_args
+from google_args import get_google_args
 from tqdm import tqdm
 from googletrans import Translator
 # pip install googletrans==3.1.0a0
@@ -27,7 +27,10 @@ def run(model, input_dir, output_dir, src, dest):
 
 
 if __name__ == '__main__':
-    print("========= Translating context =========")
-    context_args = get_context_args(lang='es')
-    en_es(context_args.input_dir, context_args.trans_dir)
-    es_en(context_args.trans_dir, context_args.backtrans_dir)
+    args = get_transformer_args(lang='es')
+#     print("========= Translating queries (es) =========")
+#     en_es(args.queries_input_dir, args.queries_trans_dir)
+#     es_en(args.queries_trans_dir, args.queries_backtrans_dir)
+    print("========= Translating context (es) =========")
+    en_es(args.context_input_dir, args.context_trans_dir)
+    es_en(args.context_trans_dir, args.context_backtrans_dir)
