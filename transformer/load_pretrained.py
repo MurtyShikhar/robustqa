@@ -32,7 +32,7 @@ def en_ru(input_dir, output_dir):
     
 def ru_en(input_dir, output_dir):
     ru2en = torch.hub.load('pytorch/fairseq', 'transformer.wmt19.ru-en',
-                       checkpoint_file='model1', tokenizer='moses', bpe='fastbpe')
+                       checkpoint_file='model1.pt', tokenizer='moses', bpe='fastbpe')
     ru2en.eval()
     ru2en.cuda()
     run(ru2en, input_dir, output_dir, "ru to en")
@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
     args = get_transformer_args(lang='ru')
     print("========= Translating queries (ru) =========")
-    en_ru(args.queries_input_dir, args.queries_trans_dir)
+    # en_ru(args.queries_input_dir, args.queries_trans_dir)
     ru_en(args.queries_trans_dir, args.queries_backtrans_dir) 
     print("========= Translating context (ru) =========")
     en_ru(args.context_input_dir, args.context_trans_dir)
