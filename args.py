@@ -18,11 +18,7 @@ def get_train_test_args():
     parser.add_argument('--train-dir', type=str, default='datasets/indomain_train')
     parser.add_argument('--val-dir', type=str, default='datasets/indomain_val')
     parser.add_argument('--finetune-dir', type=str, default='datasets/oodomain_train')
-    
-    parser.add_argument('--finetune-val-dir', type=str, default='datasets/indomain_val')
-    # test if we use indomain_val for finetune eval
-    #parser.add_argument('--finetune-val-dir', type=str, default='datasets/oodomain_val')
-    
+    parser.add_argument('--finetune-val-dir', type=str, default='datasets/oodomain_val')
     parser.add_argument('--eval-dir', type=str, default='datasets/oodomain_test')
     parser.add_argument('--finetune-datasets', type=str, default='race,relation_extraction,duorc')
     parser.add_argument('--eval-datasets', type=str, default='race,relation_extraction,duorc')
