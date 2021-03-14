@@ -62,7 +62,7 @@ def nmt_sampling(beam=1):
 
     
 if __name__ == '__main__':
-    nmt_sampling(beam=1)
+    nmt_sampling(beam=1) 
 #     nmt_sampling(beam=5) 
 
 #   tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
