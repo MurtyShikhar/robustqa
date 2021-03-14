@@ -3,7 +3,7 @@ from google_args import get_google_args
 from tqdm import tqdm
 from google_trans_new import google_translator
 import time
-# pip install googletrans==3.1.0a0
+# pip install google_trans_new
 
 def run(input_dir, output_dir, src, dest):
     in_file = open(input_dir, 'r')
