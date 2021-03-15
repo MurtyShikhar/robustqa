@@ -1,5 +1,6 @@
 import torch
-from transformer_args import get_transformer_args
+# from transformer_args import get_transformer_args
+from transformer_args import get_transformer_ood_args
 from tqdm import tqdm
 # pip install Cython
 # pip install hydra-core
@@ -53,17 +54,19 @@ def run(model, input_dir, output_dir, src_tgt):
 
 if __name__ == '__main__':
     
-#    args = get_transformer_args(lang='de')
-#    print("========= Translating queries (de) =========")
-#    en_de(args.queries_input_dir, args.queries_trans_dir)
-#    de_en(args.queries_trans_dir, args.queries_backtrans_dir)
-#    print("========= Translating context (de) =========")
-#    en_de(args.context_input_dir, args.context_trans_dir)
-#    de_en(args.context_trans_dir, args.context_backtrans_dir)
-
-    args = get_transformer_args(lang='ru')
+    # args = get_transformer_args(lang='de')
+    args = get_transformer_ood_args(lang='de')
+    print("========= Translating queries (de) =========")
+    en_de(args.queries_input_dir, args.queries_trans_dir)
+    de_en(args.queries_trans_dir, args.queries_backtrans_dir)
+    print("========= Translating context (de) =========")
+    en_de(args.context_input_dir, args.context_trans_dir)
+    de_en(args.context_trans_dir, args.context_backtrans_dir)
+    
+    # args = get_transformer_args(lang='ru')
+    args = get_transformer_ood_args(lang='ru')
     print("========= Translating queries (ru) =========")
-    # en_ru(args.queries_input_dir, args.queries_trans_dir)
+    en_ru(args.queries_input_dir, args.queries_trans_dir)
     ru_en(args.queries_trans_dir, args.queries_backtrans_dir) 
     print("========= Translating context (ru) =========")
     en_ru(args.context_input_dir, args.context_trans_dir)
