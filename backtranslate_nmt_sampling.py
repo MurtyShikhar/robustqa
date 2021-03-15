@@ -4,8 +4,11 @@ import util
 # from transformers import DistilBertTokenizerFast
 
 
-def nmt_sampling(beam=1):
-    args = get_nmt_args(beam)
+def nmt_sampling(beam=1, indomain=True):
+    if indomain:
+        args = get_nmt_args(beam)
+    else:
+        args = get_nmt_ood_args(beam)
     
     # sampling
     sample_idx, sample_context_individual_length, gold_answers, answer_locs = sample_dataset(args, args.train_datasets, args.train_dir,
@@ -47,17 +50,13 @@ def nmt_sampling(beam=1):
                            args.jaccard_queries_dir, args.jaccard_context_dir)
 
     # create augmented dataset
-    new_data_dict = gen_augmented_dataset('beam{0}'.format(beam), args.jaccard_queries_dir, args.jaccard_context_dir, 
+    new_data_dict = gen_augmented_dataset('beam{0}indomain{1}'.format(beam, indomain), args.jaccard_queries_dir, args.jaccard_context_dir, 
                                           dropped_context_individual_length, sample_idx, new_answers)
     save_as_pickle(new_data_dict, args.aug_dataset_pickle)
-#     save_as_json(new_data_dict, args.aug_dataset_dict)
-
-#     data_encodings = read_and_process(args, tokenizer, new_dataset_dict, data_dir, dataset_name, split_name)
 
     
 if __name__ == '__main__':
-#    nmt_sampling(beam=1) 
-    nmt_sampling(beam=5) 
-
-#   tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
-#   output = get_sampling_dataset(args, args.train_datasets, args.train_dir, tokenizer, 'train')
+#     nmt_sampling(beam=1, indomain=True) 
+#     nmt_sampling(beam=5, indomain=True)
+    nmt_sampling(beam=1, indomain=False) 
+    nmt_sampling(beam=5, indomain=False) 
