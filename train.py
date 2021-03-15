@@ -16,6 +16,7 @@ from torch.utils.data.sampler import RandomSampler, SequentialSampler
 from args import get_train_test_args
 import pickle
 import glob
+import numpy as np
 # from backtranslate_sampling import get_sampling_dataset
 
 from tqdm import tqdm
@@ -253,18 +254,25 @@ def get_dataset(args, datasets, data_dir, tokenizer, split_name):
             dataset_dict_curr = util.read_squad(f'{data_dir}/{dataset}')
             dataset_dict = util.merge(dataset_dict, dataset_dict_curr)
     if args.train_with_backtranslate and split_name == "train" and args.do_finetune: 
-        # if not isinstance(args.aug_dataset_pickle, list):
-        #     args.aug_dataset_pickle = [args.aug_dataset_pickle]
-        # print("Augmenting with the follow pickle: " + str(args.aug_dataset_pickle))
-        # for aug_dataset in args.aug_dataset_pickle:
-        #     augment_dataset_dict = util.load_pickle(aug_dataset)
-        #     dataset_dict = util.merge(dataset_dict, augment_dataset_dict)
-        # print("Concatenated with backtranslate data.")
-
-        pickle_files = glob.glob(args.aug_dataset_pickle_dir + "*.pickle")
+        if args.read_specific_pickles:
+            if not isinstance(args.aug_dataset_pickle, list):
+                pickle_files = [args.aug_dataset_pickle]
+            pickle_files = [args.aug_dataset_pickle_dir + x for x in pickle_files]
+        else:
+            pickle_files = glob.glob(args.aug_dataset_pickle_dir + "*.pickle")
+        
         print("Augmenting with the follow pickle: " + str(pickle_files))
         for aug_dataset in pickle_files:
             augment_dataset_dict = util.load_pickle(aug_dataset)
+            if args.sample_backtranslate:
+                augment_length = len(augment_dataset_dict["question"])
+                sample_idx = list(np.random.choice(augment_length, 
+                                                size=int(args.sample_backtranslate_prob * augment_length), 
+                                                replace=False))
+                augment_dataset_dict["question"] = [augment_dataset_dict["question"][i] for i in sample_idx]
+                augment_dataset_dict["context"] = [augment_dataset_dict["context"][i] for i in sample_idx]
+                augment_dataset_dict["id"] = [augment_dataset_dict["id"][i] for i in sample_idx]
+                augment_dataset_dict["answer"] = [augment_dataset_dict["answer"][i] for i in sample_idx]
             dataset_dict = util.merge(dataset_dict, augment_dataset_dict)
         print("Concatenated with backtranslate data.")
         
@@ -278,6 +286,15 @@ def get_finetune_val_dataset(args, indomain_datasets, indomain_data_dir, oodomai
     for dataset in indomain_datasets:
         dataset_name += f'_{dataset}'
         dataset_dict_curr = util.read_squad(f'{indomain_data_dir}/{dataset}')
+        if args.sample_indomain:
+            indomain_length = len(dataset_dict_curr["question"])
+            sample_idx = list(np.random.choice(indomain_length, 
+                                                size=int(args.sample_indomain_prob * indomain_length), 
+                                                replace=False))
+            dataset_dict_curr["question"] = [dataset_dict_curr["question"][i] for i in sample_idx]
+            dataset_dict_curr["context"] = [dataset_dict_curr["context"][i] for i in sample_idx]
+            dataset_dict_curr["id"] = [dataset_dict_curr["id"][i] for i in sample_idx]
+            dataset_dict_curr["answer"] = [dataset_dict_curr["answer"][i] for i in sample_idx]
         dataset_dict = util.merge(dataset_dict, dataset_dict_curr)
 
     oodomain_datasets = oodomain_datasets.split(',')

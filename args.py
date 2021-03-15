@@ -28,9 +28,14 @@ def get_train_test_args():
     parser.add_argument('--sub-file', type=str, default='')
     parser.add_argument('--visualize-predictions', action='store_true')
     parser.add_argument('--eval-every', type=int, default=200)
+    parser.add_argument('--read_specific_pickles', action='store_true')
     parser.add_argument('--aug_dataset_pickle', nargs = '+', type = str, default='augmented_dataset_beam_1.pickle')
     parser.add_argument('--aug_dataset_pickle_dir', type = str, default='pickle/')
     parser.add_argument('--train-with-backtranslate', action='store_true')
+    parser.add_argument('--sample_indomain', action='store_true')
+    parser.add_argument('--sample_indomain_prob', type=float, default = 0.1)
+    parser.add_argument('--sample_backtranslate', action='store_true')
+    parser.add_argument('--sample_backtranslate_prob', type=float, default = 0.1)
     args = parser.parse_args()
     return args
     
