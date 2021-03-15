@@ -28,7 +28,7 @@ def transformer_sampling(lang='de', indomain=True):
                          args.jaccard_queries_dir, args.jaccard_context_dir)
 
   # create augmented dataset
-  new_data_dict = gen_augmented_dataset('transformer{0}'.format(lang), args.jaccard_queries_dir, args.jaccard_context_dir, 
+  new_data_dict = gen_augmented_dataset('transformer{0}indomain{1}'.format(lang, indomain), args.jaccard_queries_dir, args.jaccard_context_dir, 
                                         sample_context_individual_length, sample_idx, new_answers)
   save_as_pickle(new_data_dict, args.aug_dataset_pickle)
     
