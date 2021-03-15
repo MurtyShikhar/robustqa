@@ -266,6 +266,7 @@ def get_dataset(args, datasets, data_dir, tokenizer, split_name):
             augment_dataset_dict = util.load_pickle(aug_dataset)
             if args.sample_backtranslate:
                 augment_length = len(augment_dataset_dict["question"])
+                np.random.seed(args.seed)
                 sample_idx = list(np.random.choice(augment_length, 
                                                 size=int(args.sample_backtranslate_prob * augment_length), 
                                                 replace=False))
@@ -288,6 +289,7 @@ def get_finetune_val_dataset(args, indomain_datasets, indomain_data_dir, oodomai
         dataset_dict_curr = util.read_squad(f'{indomain_data_dir}/{dataset}')
         if args.sample_indomain:
             indomain_length = len(dataset_dict_curr["question"])
+            np.random.seed(args.seed)
             sample_idx = list(np.random.choice(indomain_length, 
                                                 size=int(args.sample_indomain_prob * indomain_length), 
                                                 replace=False))
