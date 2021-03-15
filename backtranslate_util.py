@@ -199,20 +199,26 @@ def get_trans_context_answers(context_dir, sample_context_individual_length,
     return keep_index, new_answers
 
 
-def concat(file_dir):
+def concat(file_dir, unk=True):
     with open(file_dir, 'r') as f:
+      if unk:
         output = [line.strip() for line in f]
+      else:
+        output = [line.strip().replace('<unk>', ' ').replace('unk', ' ') for line in f]
     return output
 
 
-def concat_context(context_dir, sample_context_individual_length):
+def concat_context(context_dir, sample_context_individual_length, unk=True):
     output_context = []
     count = 0
     f = open(context_dir, 'r')
     whole_context = f.readlines()
     for l in sample_context_individual_length:
         individual_context = whole_context[count:(count + l)]
-        individual_context = [ic.strip() for ic in individual_context]
+        if unk:
+          individual_context = [ic.strip() for ic in individual_context]
+        else:
+          individual_context = [ic.strip().replace('<unk>', ' ').replace('unk', ' ') for ic in individual_context]
         individual_context = ' '.join(individual_context)
         output_context.append(individual_context)
         count += l
@@ -244,17 +250,17 @@ def drop_files(keep_index, queries_dir, context_dir, dropped_queries_dir, droppe
     output_c_file.close()
 
 
-def compute_backtrans_bleu(sample_queries_dir, sample_context_dir, backtrans_queries_dir, backtrans_context_dir):
-    queries_bleu = sacrebleu.corpus_bleu(concat(backtrans_queries_dir), [concat(sample_queries_dir)])
+def compute_backtrans_bleu(sample_queries_dir, sample_context_dir, backtrans_queries_dir, backtrans_context_dir, unk):
+    queries_bleu = sacrebleu.corpus_bleu(concat(backtrans_queries_dir, unk), [concat(sample_queries_dir, unk)])
     print('Queries back translation BLEU: {}'.format(queries_bleu.score))
-    context_bleu = sacrebleu.corpus_bleu(concat(backtrans_context_dir), [concat(sample_context_dir)])
+    context_bleu = sacrebleu.corpus_bleu(concat(backtrans_context_dir, unk), [concat(sample_context_dir, unk)])
     print('Context back translation BLEU: {}'.format(context_bleu.score))
 
 
 def gen_augmented_dataset(aug_data_name, backtrans_queries_dir, backtrans_context_dir,
-                          sample_context_individual_length, sample_idx, new_answers):
-    backtranslated_queries = concat(backtrans_queries_dir)
-    backtranslated_context = concat_context(backtrans_context_dir, sample_context_individual_length)
+                          sample_context_individual_length, sample_idx, new_answers, unk):
+    backtranslated_queries = concat(backtrans_queries_dir, unk)
+    backtranslated_context = concat_context(backtrans_context_dir, sample_context_individual_length, unk)
     qids = ['aug' + aug_data_name + 'num' + str(x) for x in sample_idx]
 
     new_data_dict = {'question': [], 'context': [], 'id': [], 'answer': []}
