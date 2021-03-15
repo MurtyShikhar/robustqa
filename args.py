@@ -33,11 +33,16 @@ def get_train_test_args():
     args = parser.parse_args()
     return args
     
-def get_nmt_args(beam=1):
+def get_nmt_args(beam=1, indomain=True):
     parser = argparse.ArgumentParser()
-    parser.add_argument('--train-datasets', type=str, default='squad,nat_questions,newsqa')
-    parser.add_argument('--train-dir', type=str, default='datasets/indomain_train')
-    parser.add_argument('--sample_prob', type=float, default=0.1)
+    if indomain:
+        parser.add_argument('--train-datasets', type=str, default='squad,nat_questions,newsqa')
+        parser.add_argument('--train-dir', type=str, default='datasets/indomain_train')
+        parser.add_argument('--sample_prob', type=float, default=0.1)
+    else:
+        parser.add_argument('--train-datasets', type=str, default='race,relation_extraction,duorc')
+        parser.add_argument('--train-dir', type=str, default='datasets/oodomain_train')
+        parser.add_argument('--sample_prob', type=float, default=1.0)
     parser.add_argument('--seed', type=int, default=42)
         
     # where to save the sampling (with sampling prob) queries and context
@@ -78,11 +83,16 @@ def get_nmt_args(beam=1):
     args = parser.parse_args()
     return args
 
-def get_transformer_args(lang='de'):
+def get_transformer_args(lang='de', indomain=True):
     parser = argparse.ArgumentParser()
-    parser.add_argument('--train-datasets', type=str, default='squad,nat_questions,newsqa')
-    parser.add_argument('--train-dir', type=str, default='datasets/indomain_train')
-    parser.add_argument('--sample_prob', type=float, default=0.1)
+    if indomain:
+        parser.add_argument('--train-datasets', type=str, default='squad,nat_questions,newsqa')
+        parser.add_argument('--train-dir', type=str, default='datasets/indomain_train')
+        parser.add_argument('--sample_prob', type=float, default=0.1)
+    else:
+        parser.add_argument('--train-datasets', type=str, default='race,relation_extraction,duorc')
+        parser.add_argument('--train-dir', type=str, default='datasets/oodomain_train')
+        parser.add_argument('--sample_prob', type=float, default=1.0)
     parser.add_argument('--seed', type=int, default=42)
     
     # where to save the sampling (with sampling prob) queries and context
