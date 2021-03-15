@@ -36,7 +36,7 @@ def get_train_test_args():
     parser.add_argument('--sample_indomain_prob', type=float, default = 0.1)
     parser.add_argument('--sample_backtranslate', action='store_true')
     parser.add_argument('--sample_backtranslate_prob', type=float, default = 0.1)
-    parser.add_argument('--sample_backtranslate_ood_prob', type=float, default = 0.8)
+    parser.add_argument('--sample_backtranslate_ood_prob', type=float, default = 1)
     args = parser.parse_args()
     return args
     
