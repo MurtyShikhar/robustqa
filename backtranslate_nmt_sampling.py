@@ -5,9 +5,9 @@ import util
 
 def nmt_sampling(beam=1, indomain=True, unk=True):
     if indomain:
-        args = get_nmt_args(beam)
+        args = get_nmt_args(beam, unk)
     else:
-        args = get_nmt_ood_args(beam)
+        args = get_nmt_ood_args(beam, unk)
     
     # sampling
     sample_idx, sample_context_individual_length, gold_answers, answer_locs = sample_dataset(args, args.train_datasets, args.train_dir,
