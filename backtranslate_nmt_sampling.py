@@ -54,12 +54,12 @@ def nmt_sampling(beam=1, indomain=True, unk=True):
     
 if __name__ == '__main__':
     # indomain training data, keep <unk>
-    nmt_sampling(beam=1, indomain=True, unk=True) 
-    nmt_sampling(beam=5, indomain=True, unk=True)
+#     nmt_sampling(beam=1, indomain=True, unk=True) 
+#     nmt_sampling(beam=5, indomain=True, unk=True)
     
     # ood training data, keep <unk>
-    nmt_sampling(beam=1, indomain=False, unk=True) 
-    nmt_sampling(beam=5, indomain=False, unk=True)
+#     nmt_sampling(beam=1, indomain=False, unk=True) 
+#     nmt_sampling(beam=5, indomain=False, unk=True)
     
     # indomain training data, replace <unk>
     nmt_sampling(beam=1, indomain=True, unk=False) 
