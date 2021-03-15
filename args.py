@@ -33,7 +33,7 @@ def get_train_test_args():
     args = parser.parse_args()
     return args
     
-def get_nmt_args(beam=1):
+def get_nmt_args(beam=1, unk=True):
     parser = argparse.ArgumentParser()
     parser.add_argument('--train-datasets', type=str, default='squad,nat_questions,newsqa')
     parser.add_argument('--train-dir', type=str, default='datasets/indomain_train')
@@ -70,15 +70,17 @@ def get_nmt_args(beam=1):
     parser.add_argument('--sample_context_dropped_dir', type=str, default='2_layer_nmt/QA/sample_context_beam_{0}_dropped.txt'.format(beam))
     
     # where to store augmented dataset
-    parser.add_argument('--aug_dataset_dict', type=str, default='augmented_dataset_beam_{0}.json'.format(beam))
-    parser.add_argument('--aug_dataset_pickle', type=str, default='augmented_dataset_beam_{0}.pickle'.format(beam))
+    if unk:
+        parser.add_argument('--aug_dataset_pickle', type=str, default='augmented_dataset_beam_{0}.pickle'.format(beam))
+    else:
+        parser.add_argument('--aug_dataset_pickle', type=str, default='augmented_dataset_beam_{0}_replace.pickle'.format(beam))
 
     # whether add backtranslated data to finetune
     parser.add_argument('--train_with_backtranslate', type=bool, default=True)
     args = parser.parse_args()
     return args
 
-def get_nmt_ood_args(beam=1):
+def get_nmt_ood_args(beam=1, unk=True):
     parser = argparse.ArgumentParser()
     parser.add_argument('--train-datasets', type=str, default='race,relation_extraction,duorc')
     parser.add_argument('--train-dir', type=str, default='datasets/oodomain_train')
@@ -115,8 +117,10 @@ def get_nmt_ood_args(beam=1):
     parser.add_argument('--sample_context_dropped_dir', type=str, default='2_layer_nmt/QA/ood/sample_context_beam_{0}_dropped.txt'.format(beam))
     
     # where to store augmented dataset
-    parser.add_argument('--aug_dataset_dict', type=str, default='augmented_dataset_beam_{0}_ood.json'.format(beam))
-    parser.add_argument('--aug_dataset_pickle', type=str, default='augmented_dataset_beam_{0}_ood.pickle'.format(beam))
+    if unk:
+        parser.add_argument('--aug_dataset_pickle', type=str, default='augmented_dataset_beam_{0}_ood.pickle'.format(beam))
+    else:
+        parser.add_argument('--aug_dataset_pickle', type=str, default='augmented_dataset_beam_{0}_ood_replace.pickle'.format(beam))
 
     # whether add backtranslated data to finetune
     parser.add_argument('--train_with_backtranslate', type=bool, default=True)
@@ -148,7 +152,6 @@ def get_transformer_args(lang='de'):
     parser.add_argument('--sample_context_dropped_dir', type=str, default='transformer/QA/sample_context_{0}_dropped.txt'.format(lang))
     
     # where to store augmented dataset
-    parser.add_argument('--aug_dataset_dict', type=str, default='augmented_dataset_transformer_{0}.json'.format(lang))
     parser.add_argument('--aug_dataset_pickle', type=str, default='augmented_dataset_transformer_{0}.pickle'.format(lang))
     
     # whether add backtranslated data to finetune
@@ -181,7 +184,6 @@ def get_transformer_ood_args(lang='de'):
     parser.add_argument('--sample_context_dropped_dir', type=str, default='transformer/QA/ood/sample_context_{0}_dropped.txt'.format(lang))
     
     # where to store augmented dataset
-    parser.add_argument('--aug_dataset_dict', type=str, default='augmented_dataset_transformer_{0}_ood.json'.format(lang))
     parser.add_argument('--aug_dataset_pickle', type=str, default='augmented_dataset_transformer_{0}_ood.pickle'.format(lang))
     
     # whether add backtranslated data to finetune
