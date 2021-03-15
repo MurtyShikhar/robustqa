@@ -252,8 +252,11 @@ def get_dataset(args, datasets, data_dir, tokenizer, split_name):
             dataset_dict_curr = util.read_squad(f'{data_dir}/{dataset}')
             dataset_dict = util.merge(dataset_dict, dataset_dict_curr)
     if args.train_with_backtranslate and split_name == "train" and args.do_finetune: 
-        augment_dataset_dict = util.load_pickle(args.aug_dataset_pickle)
-        dataset_dict = util.merge(dataset_dict, augment_dataset_dict)
+        if not isinstance(args.aug_dataset_pickle, list):
+            args.aug_dataset_pickle = [args.aug_dataset_pickle]
+        for aug_dataset in args.aug_dataset_pickle:
+            augment_dataset_dict = util.load_pickle(aug_dataset)
+            dataset_dict = util.merge(dataset_dict, augment_dataset_dict)
         print("Concatenated with backtranslate data.")
     data_encodings = read_and_process(args, tokenizer, dataset_dict, data_dir, dataset_name, split_name)
     return util.QADataset(data_encodings, train=(split_name=='train')), dataset_dict
