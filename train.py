@@ -254,6 +254,7 @@ def get_dataset(args, datasets, data_dir, tokenizer, split_name):
     if args.train_with_backtranslate and split_name == "train" and args.do_finetune: 
         if not isinstance(args.aug_dataset_pickle, list):
             args.aug_dataset_pickle = [args.aug_dataset_pickle]
+        print("Augmenting with the follow pickle: " + str(args.aug_dataset_pickle))
         for aug_dataset in args.aug_dataset_pickle:
             augment_dataset_dict = util.load_pickle(aug_dataset)
             dataset_dict = util.merge(dataset_dict, augment_dataset_dict)
@@ -275,6 +276,8 @@ def get_finetune_val_dataset(args, indomain_datasets, indomain_data_dir, oodomai
         dataset_name += f'_{dataset}'
         dataset_dict_curr = util.read_squad(f'{oodomain_data_dir}/{dataset}')
         dataset_dict = util.merge(dataset_dict, dataset_dict_curr)
+    
+    print("finetune validation with datasets: ", dataset_name)
 
     data_encodings = read_and_process(args, tokenizer, dataset_dict, oodomain_data_dir, dataset_name, split_name)
     return util.QADataset(data_encodings, train=(split_name=='train')), dataset_dict
