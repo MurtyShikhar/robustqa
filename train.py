@@ -15,6 +15,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.sampler import RandomSampler, SequentialSampler
 from args import get_train_test_args
 import pickle
+import glob
 # from backtranslate_sampling import get_sampling_dataset
 
 from tqdm import tqdm
@@ -252,13 +253,21 @@ def get_dataset(args, datasets, data_dir, tokenizer, split_name):
             dataset_dict_curr = util.read_squad(f'{data_dir}/{dataset}')
             dataset_dict = util.merge(dataset_dict, dataset_dict_curr)
     if args.train_with_backtranslate and split_name == "train" and args.do_finetune: 
-        if not isinstance(args.aug_dataset_pickle, list):
-            args.aug_dataset_pickle = [args.aug_dataset_pickle]
-        print("Augmenting with the follow pickle: " + str(args.aug_dataset_pickle))
-        for aug_dataset in args.aug_dataset_pickle:
+        # if not isinstance(args.aug_dataset_pickle, list):
+        #     args.aug_dataset_pickle = [args.aug_dataset_pickle]
+        # print("Augmenting with the follow pickle: " + str(args.aug_dataset_pickle))
+        # for aug_dataset in args.aug_dataset_pickle:
+        #     augment_dataset_dict = util.load_pickle(aug_dataset)
+        #     dataset_dict = util.merge(dataset_dict, augment_dataset_dict)
+        # print("Concatenated with backtranslate data.")
+
+        pickle_files = glob.glob(args.aug_dataset_pickle_dir + "*.pickle")
+        print("Augmenting with the follow pickle: " + str(pickle_files))
+        for aug_dataset in pickle_files:
             augment_dataset_dict = util.load_pickle(aug_dataset)
             dataset_dict = util.merge(dataset_dict, augment_dataset_dict)
         print("Concatenated with backtranslate data.")
+        
     data_encodings = read_and_process(args, tokenizer, dataset_dict, data_dir, dataset_name, split_name)
     return util.QADataset(data_encodings, train=(split_name=='train')), dataset_dict
 
