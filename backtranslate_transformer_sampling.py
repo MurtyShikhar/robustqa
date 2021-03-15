@@ -3,8 +3,11 @@ from backtranslate_util import *
 import util
 # from transformers import DistilBertTokenizerFast
 
-def transformer_google_sampling(lang='de'):
-  args = get_transformer_args(lang)
+def transformer_sampling(lang='de', indomain=True):
+  if indomain:
+    args = get_transformer_args(lang)
+  else:
+    args = get_transformer_ood_args(lang)
   
   # sampling
   sample_idx, sample_context_individual_length, gold_answers, answer_locs = sample_dataset(args, args.train_datasets, args.train_dir,
@@ -28,11 +31,10 @@ def transformer_google_sampling(lang='de'):
   new_data_dict = gen_augmented_dataset('transformer{0}'.format(lang), args.jaccard_queries_dir, args.jaccard_context_dir, 
                                         sample_context_individual_length, sample_idx, new_answers)
   save_as_pickle(new_data_dict, args.aug_dataset_pickle)
-#   save_as_json(new_data_dict, args.aug_dataset_dict)
-
-#   data_encodings = read_and_process(args, tokenizer, new_dataset_dict, data_dir, dataset_name, split_name)
     
   
 if __name__ == '__main__':
-  transformer_google_sampling(lang='de') 
-#   transformer_google_sampling(lang='ru') 
+#   transformer_sampling(lang='de', indomain=True) 
+#   transformer_sampling(lang='ru', indomain=True)
+  transformer_sampling(lang='de', indomain=False) 
+  transformer_sampling(lang='ru', indomain=False) 
