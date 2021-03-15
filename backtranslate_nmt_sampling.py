@@ -3,7 +3,7 @@ from backtranslate_util import *
 import util
 
 
-def nmt_sampling(beam=1, indomain=True):
+def nmt_sampling(beam=1, indomain=True, unk=True):
     if indomain:
         args = get_nmt_args(beam)
     else:
@@ -44,16 +44,27 @@ def nmt_sampling(beam=1, indomain=True):
     drop_files(keep_index, args.sample_queries_dir, args.sample_context_dir, 
                args.sample_queries_dropped_dir, args.sample_context_dropped_dir, sample_context_individual_length)
     compute_backtrans_bleu(args.sample_queries_dropped_dir, args.sample_context_dropped_dir,
-                           args.jaccard_queries_dir, args.jaccard_context_dir)
+                           args.jaccard_queries_dir, args.jaccard_context_dir, unk)
 
     # create augmented dataset
-    new_data_dict = gen_augmented_dataset('beam{0}indomain{1}'.format(beam, indomain), args.jaccard_queries_dir, args.jaccard_context_dir, 
-                                          dropped_context_individual_length, sample_idx, new_answers)
+    new_data_dict = gen_augmented_dataset('beam{0}indomain{1}unk{2}'.format(beam, indomain, unk), args.jaccard_queries_dir, args.jaccard_context_dir, 
+                                          dropped_context_individual_length, sample_idx, new_answers, unk)
     save_as_pickle(new_data_dict, args.aug_dataset_pickle)
 
     
 if __name__ == '__main__':
-#     nmt_sampling(beam=1, indomain=True) 
-#     nmt_sampling(beam=5, indomain=True)
-    nmt_sampling(beam=1, indomain=False) 
-    nmt_sampling(beam=5, indomain=False) 
+    # indomain training data, keep <unk>
+    nmt_sampling(beam=1, indomain=True, unk=True) 
+    nmt_sampling(beam=5, indomain=True, unk=True)
+    
+    # ood training data, keep <unk>
+    nmt_sampling(beam=1, indomain=False, unk=True) 
+    nmt_sampling(beam=5, indomain=False, unk=True)
+    
+    # indomain training data, replace <unk>
+    nmt_sampling(beam=1, indomain=True, unk=False) 
+    nmt_sampling(beam=5, indomain=True, unk=False)
+    
+    # ood training data, replace <unk>
+    nmt_sampling(beam=1, indomain=False, unk=False) 
+    nmt_sampling(beam=5, indomain=False, unk=False)
