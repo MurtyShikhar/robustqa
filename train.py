@@ -258,6 +258,24 @@ def get_dataset(args, datasets, data_dir, tokenizer, split_name):
     data_encodings = read_and_process(args, tokenizer, dataset_dict, data_dir, dataset_name, split_name)
     return util.QADataset(data_encodings, train=(split_name=='train')), dataset_dict
 
+def get_finetune_val_dataset(args, indomain_datasets, indomain_data_dir, oodomain_datasets, oodomain_data_dir, tokenizer, split_name):
+    dataset_dict = None
+    dataset_name = ''
+    indomain_datasets = indomain_datasets.split(',')
+    for dataset in indomain_datasets:
+        dataset_name += f'_{dataset}'
+        dataset_dict_curr = util.read_squad(f'{indomain_data_dir}/{dataset}')
+        dataset_dict = util.merge(dataset_dict, dataset_dict_curr)
+
+    oodomain_datasets = oodomain_datasets.split(',')
+    for dataset in oodomain_datasets:
+        dataset_name += f'_{dataset}'
+        dataset_dict_curr = util.read_squad(f'{oodomain_data_dir}/{dataset}')
+        dataset_dict = util.merge(dataset_dict, dataset_dict_curr)
+
+    data_encodings = read_and_process(args, tokenizer, dataset_dict, oodomain_data_dir, dataset_name, split_name)
+    return util.QADataset(data_encodings, train=(split_name=='train')), dataset_dict
+
 def main():
     # define parser and arguments
     args = get_train_test_args()
@@ -299,7 +317,7 @@ def main():
         model.to(args.device)
         train_dataset, _ = get_dataset(args, args.finetune_datasets, args.finetune_dir, tokenizer, 'train')
         log.info("Preparing Finetune Validation Data...")
-        val_dataset, val_dict = get_dataset(args, args.train_datasets, args.val_dir, tokenizer, 'val')
+        val_dataset, val_dict = get_finetune_val_dataset(args, args.train_datasets, args.val_dir, args.finetune_datasets, args.finetune_val_dir, tokenizer, 'val')
         train_loader = DataLoader(train_dataset,
                                 batch_size=args.batch_size,
                                 sampler=RandomSampler(train_dataset))
