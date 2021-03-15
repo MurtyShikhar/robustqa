@@ -266,7 +266,7 @@ def get_dataset(args, datasets, data_dir, tokenizer, split_name):
             augment_dataset_dict = util.load_pickle(aug_dataset)
             if args.sample_backtranslate:
                 if "ood" in aug_dataset:
-                    sample_prob = args.sample_backtranslate_oob_prob
+                    sample_prob = args.sample_backtranslate_ood_prob
                 else:
                     sample_prob = args.sample_backtranslate_prob
                 augment_length = len(augment_dataset_dict["question"])
