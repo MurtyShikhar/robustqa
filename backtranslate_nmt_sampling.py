@@ -1,4 +1,4 @@
-from args import get_nmt_args
+from args import get_nmt_args, get_nmt_ood_args
 from backtranslate_util import *
 import util
 # from transformers import DistilBertTokenizerFast
