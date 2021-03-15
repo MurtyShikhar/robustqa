@@ -250,7 +250,7 @@ def drop_files(keep_index, queries_dir, context_dir, dropped_queries_dir, droppe
     output_c_file.close()
 
 
-def compute_backtrans_bleu(sample_queries_dir, sample_context_dir, backtrans_queries_dir, backtrans_context_dir, unk):
+def compute_backtrans_bleu(sample_queries_dir, sample_context_dir, backtrans_queries_dir, backtrans_context_dir, unk=True):
     queries_bleu = sacrebleu.corpus_bleu(concat(backtrans_queries_dir, unk), [concat(sample_queries_dir, unk)])
     print('Queries back translation BLEU: {}'.format(queries_bleu.score))
     context_bleu = sacrebleu.corpus_bleu(concat(backtrans_context_dir, unk), [concat(sample_context_dir, unk)])
@@ -258,7 +258,7 @@ def compute_backtrans_bleu(sample_queries_dir, sample_context_dir, backtrans_que
 
 
 def gen_augmented_dataset(aug_data_name, backtrans_queries_dir, backtrans_context_dir,
-                          sample_context_individual_length, sample_idx, new_answers, unk):
+                          sample_context_individual_length, sample_idx, new_answers, unk=True):
     backtranslated_queries = concat(backtrans_queries_dir, unk)
     backtranslated_context = concat_context(backtrans_context_dir, sample_context_individual_length, unk)
     qids = ['aug' + aug_data_name + 'num' + str(x) for x in sample_idx]
