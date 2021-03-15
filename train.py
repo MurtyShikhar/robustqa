@@ -262,11 +262,11 @@ def get_dataset(args, datasets, data_dir, tokenizer, split_name):
             pickle_files = glob.glob(args.aug_dataset_pickle_dir + "*.pickle")
         
         print("Augmenting with the follow pickle: " + str(pickle_files))
-        for aug_dataset in pickle_files:
+        for idx, aug_dataset in enumerate(pickle_files):
             augment_dataset_dict = util.load_pickle(aug_dataset)
             if args.sample_backtranslate:
                 augment_length = len(augment_dataset_dict["question"])
-                np.random.seed(args.seed)
+                np.random.seed(idx)
                 sample_idx = list(np.random.choice(augment_length, 
                                                 size=int(args.sample_backtranslate_prob * augment_length), 
                                                 replace=False))
