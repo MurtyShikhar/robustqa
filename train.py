@@ -257,7 +257,7 @@ def get_dataset(args, datasets, data_dir, tokenizer, split_name):
         if args.read_specific_pickles:
             if not isinstance(args.aug_dataset_pickle, list):
                 pickle_files = [args.aug_dataset_pickle]
-            pickle_files = [args.aug_dataset_pickle_dir + x for x in pickle_files]
+            pickle_files = [args.aug_dataset_pickle_dir + x for x in args.aug_dataset_pickle]
         else:
             pickle_files = glob.glob(args.aug_dataset_pickle_dir + "*.pickle")
         
