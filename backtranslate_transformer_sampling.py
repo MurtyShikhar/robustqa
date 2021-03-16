@@ -34,7 +34,7 @@ def transformer_sampling(lang='de', indomain=True):
     
   
 if __name__ == '__main__':
-  #transformer_sampling(lang='de', indomain=True) 
+  transformer_sampling(lang='de', indomain=True) 
   transformer_sampling(lang='ru', indomain=True)
-  #transformer_sampling(lang='de', indomain=False) 
-  #transformer_sampling(lang='ru', indomain=False) 
+  transformer_sampling(lang='de', indomain=False) 
+  transformer_sampling(lang='ru', indomain=False) 
