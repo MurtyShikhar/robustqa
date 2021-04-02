@@ -14,6 +14,10 @@ from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import RandomSampler, SequentialSampler
 from args import get_train_test_args
+import pickle
+import glob
+import numpy as np
+# from backtranslate_sampling import get_sampling_dataset
 
 from tqdm import tqdm
 
@@ -128,7 +132,7 @@ def read_and_process(args, tokenizer, dataset_dict, dir_name, dataset_name, spli
             tokenized_examples = prepare_train_data(dataset_dict, tokenizer)
         else:
             tokenized_examples = prepare_eval_data(dataset_dict, tokenizer)
-        util.save_pickle(tokenized_examples, cache_path)
+        # util.save_pickle(tokenized_examples, cache_path)
     return tokenized_examples
 
 
@@ -241,14 +245,73 @@ class Trainer():
         return best_scores
 
 def get_dataset(args, datasets, data_dir, tokenizer, split_name):
-    datasets = datasets.split(',')
     dataset_dict = None
-    dataset_name=''
-    for dataset in datasets:
-        dataset_name += f'_{dataset}'
-        dataset_dict_curr = util.read_squad(f'{data_dir}/{dataset}')
-        dataset_dict = util.merge(dataset_dict, dataset_dict_curr)
+    dataset_name = ''
+    if datasets != "":
+        datasets = datasets.split(',')
+        for dataset in datasets:
+            dataset_name += f'_{dataset}'
+            dataset_dict_curr = util.read_squad(f'{data_dir}/{dataset}')
+            dataset_dict = util.merge(dataset_dict, dataset_dict_curr)
+    if args.train_with_backtranslate and split_name == "train" and args.do_finetune: 
+        if args.read_specific_pickles:
+            if not isinstance(args.aug_dataset_pickle, list):
+                pickle_files = [args.aug_dataset_pickle]
+            pickle_files = [args.aug_dataset_pickle_dir + x for x in args.aug_dataset_pickle]
+        else:
+            pickle_files = glob.glob(args.aug_dataset_pickle_dir + "*.pickle")
+        
+        print("Augmenting with the follow pickle: " + str(pickle_files))
+        for idx, aug_dataset in enumerate(pickle_files):
+            augment_dataset_dict = util.load_pickle(aug_dataset)
+            if args.sample_backtranslate:
+                if "ood" in aug_dataset:
+                    sample_prob = args.sample_backtranslate_ood_prob
+                else:
+                    sample_prob = args.sample_backtranslate_prob
+                augment_length = len(augment_dataset_dict["question"])
+                np.random.seed(idx)
+                sample_idx = list(np.random.choice(augment_length, 
+                                                size=int(sample_prob * augment_length), 
+                                                replace=False))
+                augment_dataset_dict["question"] = [augment_dataset_dict["question"][i] for i in sample_idx]
+                augment_dataset_dict["context"] = [augment_dataset_dict["context"][i] for i in sample_idx]
+                augment_dataset_dict["id"] = [augment_dataset_dict["id"][i] for i in sample_idx]
+                augment_dataset_dict["answer"] = [augment_dataset_dict["answer"][i] for i in sample_idx]
+            dataset_dict = util.merge(dataset_dict, augment_dataset_dict)
+        print("Concatenated with backtranslate data.")
+        
     data_encodings = read_and_process(args, tokenizer, dataset_dict, data_dir, dataset_name, split_name)
+    return util.QADataset(data_encodings, train=(split_name=='train')), dataset_dict
+
+def get_finetune_val_dataset(args, indomain_datasets, indomain_data_dir, oodomain_datasets, oodomain_data_dir, tokenizer, split_name):
+    dataset_dict = None
+    dataset_name = ''
+    indomain_datasets = indomain_datasets.split(',')
+    for dataset in indomain_datasets:
+        dataset_name += f'_{dataset}'
+        dataset_dict_curr = util.read_squad(f'{indomain_data_dir}/{dataset}')
+        if args.sample_indomain:
+            indomain_length = len(dataset_dict_curr["question"])
+            np.random.seed(args.seed)
+            sample_idx = list(np.random.choice(indomain_length, 
+                                                size=int(args.sample_indomain_prob * indomain_length), 
+                                                replace=False))
+            dataset_dict_curr["question"] = [dataset_dict_curr["question"][i] for i in sample_idx]
+            dataset_dict_curr["context"] = [dataset_dict_curr["context"][i] for i in sample_idx]
+            dataset_dict_curr["id"] = [dataset_dict_curr["id"][i] for i in sample_idx]
+            dataset_dict_curr["answer"] = [dataset_dict_curr["answer"][i] for i in sample_idx]
+        dataset_dict = util.merge(dataset_dict, dataset_dict_curr)
+
+    oodomain_datasets = oodomain_datasets.split(',')
+    for dataset in oodomain_datasets:
+        dataset_name += f'_{dataset}'
+        dataset_dict_curr = util.read_squad(f'{oodomain_data_dir}/{dataset}')
+        dataset_dict = util.merge(dataset_dict, dataset_dict_curr)
+    
+    print("finetune validation with datasets: ", dataset_name)
+
+    data_encodings = read_and_process(args, tokenizer, dataset_dict, oodomain_data_dir, dataset_name, split_name)
     return util.QADataset(data_encodings, train=(split_name=='train')), dataset_dict
 
 def main():
@@ -271,6 +334,28 @@ def main():
         train_dataset, _ = get_dataset(args, args.train_datasets, args.train_dir, tokenizer, 'train')
         log.info("Preparing Validation Data...")
         val_dataset, val_dict = get_dataset(args, args.train_datasets, args.val_dir, tokenizer, 'val')
+        train_loader = DataLoader(train_dataset,
+                                batch_size=args.batch_size,
+                                sampler=RandomSampler(train_dataset))
+        val_loader = DataLoader(val_dataset,
+                                batch_size=args.batch_size,
+                                sampler=SequentialSampler(val_dataset))
+        best_scores = trainer.train(model, train_loader, val_loader, val_dict)
+    if args.do_finetune:
+        if not os.path.exists(args.save_dir):
+            os.makedirs(args.save_dir)
+        args.save_dir = util.get_save_dir(args.save_dir, args.run_name)
+        log = util.get_logger(args.save_dir, 'log_finetune')
+        log.info(f'Args: {json.dumps(vars(args), indent=4, sort_keys=True)}')
+        log.info("Preparing Finetune Training Data...")
+        args.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        trainer = Trainer(args, log)
+        checkpoint_path = os.path.join(args.baseline_save_dir, 'checkpoint')
+        model = DistilBertForQuestionAnswering.from_pretrained(checkpoint_path)
+        model.to(args.device)
+        train_dataset, _ = get_dataset(args, args.finetune_datasets, args.finetune_dir, tokenizer, 'train')
+        log.info("Preparing Finetune Validation Data...")
+        val_dataset, val_dict = get_finetune_val_dataset(args, args.train_datasets, args.val_dir, args.finetune_datasets, args.finetune_val_dir, tokenizer, 'val')
         train_loader = DataLoader(train_dataset,
                                 batch_size=args.batch_size,
                                 sampler=RandomSampler(train_dataset))

@@ -1,3 +1,6 @@
+## CS224N Project
+Author: Zhu Shen, Yijie Sun, Zelin Li
+
 ## Starter code for robustqa track
 - Download datasets from [here](https://drive.google.com/file/d/1Fv2d30hY-2niU7t61ktnMsi_HUXS6-Qx/view?usp=sharing)
 - Setup environment with `conda env create -f environment.yml`
